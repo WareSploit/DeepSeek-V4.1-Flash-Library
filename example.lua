@@ -1,9 +1,3 @@
---[[
-    DeepSeek V4.1-Flash - Example Script
-    Author: WareSploit
-]]
-
--- ✅ Твоя прямая raw-ссылка на GitHub
 local LibraryURL = "https://raw.githubusercontent.com/WareSploit/DeepSeek-V4.1-Flash-Library/main/main.lua"
 
 local success, Library = pcall(function()
@@ -11,21 +5,17 @@ local success, Library = pcall(function()
 end)
 
 if not success then
-    return warn("Не удалось загрузить библиотеку. Проверь ссылку и наличие файла main.lua в репозитории.")
+    return warn("Failed to load library.")
 end
 
 local Window = Library:CreateWindow("DeepSeek V4.1-Flash")
 
-Library:Notify("DeepSeek", "Библиотека успешно загружена!", 5)
-
 local MainTab = Window:CreateTab("Main")
 local VisualTab = Window:CreateTab("Visuals")
-local MiscTab = Window:CreateTab("Misc")
+local ConfigTab = Window:CreateTab("Configs")
 
--- ==========================================
--- MAIN TAB
--- ==========================================
-MainTab:CreateLabel(MainTab, "Настройки игрока")
+-- Main Tab
+MainTab:CreateLabel(MainTab, "=== Main Functions ===")
 
 MainTab:CreateToggle(MainTab, "Auto Farm", "AutoFarm", false, function(state)
     print("AutoFarm:", state)
@@ -41,33 +31,24 @@ MainTab:CreateDropdown(MainTab, "Select Mode", "Mode", {"Legit", "Rage", "Silent
     print("Mode:", opt)
 end)
 
--- ==========================================
--- VISUALS TAB
--- ==========================================
-VisualTab:CreateLabel(VisualTab, "Визуальные настройки")
+-- Visuals Tab
+VisualTab:CreateLabel(VisualTab, "=== Visual Settings ===")
 
-VisualTab:CreateKeybind(VisualTab, "Toggle ESP", "EspKey", Enum.KeyCode.RightShift, function()
-    Library:Notify("ESP", "ESP переключен!", 2)
+VisualTab:CreateKeybind(VisualTab, "Toggle ESP", "EspKey", Enum.KeyCode.RightShift, function(key)
+    Library:Notify("ESP", "ESP Toggled", 2)
 end)
 
-VisualTab:CreateColorPicker(VisualTab, "ESP Color", "EspColor", Color3.fromRGB(255, 0, 0), function(color)
-    print("Новый цвет:", color)
+-- Configs Tab
+ConfigTab:CreateTextBox(ConfigTab, "Config Name", "ConfigNameBox", "default", function(text)
+    print("Config name set to:", text)
 end)
 
--- ==========================================
--- MISC TAB
--- ==========================================
-MiscTab:CreateLabel(MiscTab, "Разное")
-
-MiscTab:CreateTextBox(MiscTab, "Custom Text", "TextBoxFlag", "Hello", function(text)
-    print("Текст сохранен:", text)
+ConfigTab:CreateButton(ConfigTab, "Save Config", function()
+    Library:SaveConfig("default")
 end)
 
-MiscTab:CreateButton(MiscTab, "Нажми меня", function()
-    Library:Notify("Кнопка", "Ты нажал кнопку!", 3)
+ConfigTab:CreateButton(ConfigTab, "Load Config", function()
+    Library:LoadConfig("default")
 end)
 
--- ==========================================
--- CONFIGS TAB
--- ==========================================
-Library:BuildConfigTab(Window)
+Library:Notify("Loaded", "DeepSeek UI is ready!", 5)
