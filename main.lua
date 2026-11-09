@@ -576,19 +576,53 @@ function Library:CreateWindow(title)
         Page.AutomaticCanvasSize = Enum.AutomaticSize.None
         Page.Parent = PageFrame
         
-        local PageLayout = Instance.new("UIListLayout")
-        PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        PageLayout.Padding = UDim.new(0, 6)
-        PageLayout.Parent = Page
-        
-        local function UpdateCanvas()
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageLayout.AbsoluteContentSize.Y + 12)
+        Page.ClipsDescendants = true
+
+        -- Two-column content area, similar to a modern settings dashboard.
+        local LeftColumn = Instance.new("Frame")
+        LeftColumn.Name = "LeftColumn"
+        LeftColumn.Size = UDim2.new(0.49, 0, 0, 0)
+        LeftColumn.Position = UDim2.new(0, 0, 0, 0)
+        LeftColumn.BackgroundTransparency = 1
+        LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
+        LeftColumn.Parent = Page
+
+        local RightColumn = Instance.new("Frame")
+        RightColumn.Name = "RightColumn"
+        RightColumn.Size = UDim2.new(0.49, 0, 0, 0)
+        RightColumn.Position = UDim2.new(0.51, 0, 0, 0)
+        RightColumn.BackgroundTransparency = 1
+        RightColumn.AutomaticSize = Enum.AutomaticSize.Y
+        RightColumn.Parent = Page
+
+        local function MakeColumnLayout(column)
+            local layout = Instance.new("UIListLayout")
+            layout.SortOrder = Enum.SortOrder.LayoutOrder
+            layout.Padding = UDim.new(0, 7)
+            layout.Parent = column
+            return layout
         end
 
-        PageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvas)
+        local LeftLayout = MakeColumnLayout(LeftColumn)
+        local RightLayout = MakeColumnLayout(RightColumn)
+
+        local function UpdateCanvas()
+            local contentHeight = math.max(LeftLayout.AbsoluteContentSize.Y, RightLayout.AbsoluteContentSize.Y)
+            Page.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 8)
+        end
+
+        LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvas)
+        RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvas)
         UpdateCanvas()
 
-        local tabObj = { Button = TabBtn, Page = Page, Line = Line }
+        local tabObj = {
+            Button = TabBtn,
+            Page = Page,
+            Line = Line,
+            LeftColumn = LeftColumn,
+            RightColumn = RightColumn,
+            NextColumn = 1,
+        }
 
         local function SelectTab()
             for _, t in ipairs(WindowObj.Tabs) do
@@ -618,13 +652,32 @@ function Library:CreateWindow(title)
     end
 
     -- ========================================================================
+    -- ВЫБОР КОЛОНКИ ДЛЯ ЭЛЕМЕНТА
+    -- ========================================================================
+    local function GetElementParent(parent)
+        -- Tab objects distribute controls evenly between two columns.
+        if parent and parent.LeftColumn and parent.RightColumn then
+            local target = parent.NextColumn == 1 and parent.LeftColumn or parent.RightColumn
+            parent.NextColumn = parent.NextColumn == 1 and 2 or 1
+            return target
+        end
+
+        -- Section objects (and compatible custom containers) use their Page.
+        if parent and parent.Page then
+            return parent.Page
+        end
+
+        return parent
+    end
+
+    -- ========================================================================
     -- ФУНКЦИЯ: БАЗОВЫЙ КОНТЕЙНЕР ЭЛЕМЕНТА
     -- ========================================================================
     local function CreateBase(parent, height, text)
         local f = Instance.new("Frame")
         f.Size = UDim2.new(1, 0, 0, height)
         f.BackgroundColor3 = Theme.ElementBg
-        f.BackgroundTransparency = Theme.ElementTrans
+        f.BackgroundTransparency = 0.35
         f.BorderSizePixel = 0
         f.Parent = parent
         
@@ -633,7 +686,7 @@ function Library:CreateWindow(title)
         
         if text then
             local lbl = Instance.new("TextLabel")
-            lbl.Size = UDim2.new(1, -20, 1, 0)
+            lbl.Size = UDim2.new(0.46, -8, 1, 0)
             lbl.Position = UDim2.new(0, 10, 0, 0)
             lbl.BackgroundTransparency = 1
             lbl.Text = text
@@ -651,7 +704,7 @@ function Library:CreateWindow(title)
     -- ФУНКЦИЯ: LABEL
     -- ========================================================================
     function WindowObj:CreateLabel(parent, text)
-        local f = CreateBase(parent.Page, 25, text)
+        local f = CreateBase(GetElementParent(parent), 25, text)
         f.BackgroundTransparency = 1
         
         for _, child in pairs(f:GetChildren()) do 
@@ -662,10 +715,64 @@ function Library:CreateWindow(title)
     end
 
     -- ========================================================================
+    -- ФУНКЦИЯ: SECTION / GROUP BOX
+    -- ========================================================================
+    function WindowObj:CreateSection(parent, name, column)
+        local target
+        if parent and parent.LeftColumn and parent.RightColumn then
+            if column == "Right" or column == 2 then
+                target = parent.RightColumn
+            elseif column == "Left" or column == 1 then
+                target = parent.LeftColumn
+            else
+                target = GetElementParent(parent)
+            end
+        else
+            target = GetElementParent(parent)
+        end
+
+        local sectionFrame = Instance.new("Frame")
+        sectionFrame.Name = "Section_" .. tostring(name)
+        sectionFrame.Size = UDim2.new(1, 0, 0, 0)
+        sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
+        sectionFrame.BackgroundColor3 = Theme.ElementBg
+        sectionFrame.BackgroundTransparency = 0.28
+        sectionFrame.BorderSizePixel = 0
+        sectionFrame.Parent = target
+        AddStroke(sectionFrame, Theme.Stroke, 1)
+
+        local header = Instance.new("TextLabel")
+        header.Size = UDim2.new(1, -16, 0, 28)
+        header.Position = UDim2.new(0, 8, 0, 0)
+        header.BackgroundTransparency = 1
+        header.Text = tostring(name)
+        header.TextColor3 = Theme.Text
+        header.Font = Enum.Font.Gotham
+        header.TextSize = 13
+        header.TextXAlignment = Enum.TextXAlignment.Left
+        header.Parent = sectionFrame
+
+        local content = Instance.new("Frame")
+        content.Name = "Content"
+        content.Size = UDim2.new(1, -16, 0, 0)
+        content.Position = UDim2.new(0, 8, 0, 32)
+        content.AutomaticSize = Enum.AutomaticSize.Y
+        content.BackgroundTransparency = 1
+        content.Parent = sectionFrame
+
+        local contentLayout = Instance.new("UIListLayout")
+        contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        contentLayout.Padding = UDim.new(0, 5)
+        contentLayout.Parent = content
+
+        return { Page = content, Frame = sectionFrame }
+    end
+
+    -- ========================================================================
     -- ФУНКЦИЯ: BUTTON
     -- ========================================================================
     function WindowObj:CreateButton(parent, text, callback)
-        local f = CreateBase(parent.Page, 35, "")
+        local f = CreateBase(GetElementParent(parent), 35, "")
         
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 1, 0)
@@ -687,11 +794,11 @@ function Library:CreateWindow(title)
     -- ФУНКЦИЯ: TOGGLE
     -- ========================================================================
     function WindowObj:CreateToggle(parent, text, flag, default, callback)
-        local f = CreateBase(parent.Page, 35, text)
+        local f = CreateBase(GetElementParent(parent), 35, text)
         
         local bg = Instance.new("Frame")
-        bg.Size = UDim2.new(0, 40, 0, 20)
-        bg.Position = UDim2.new(1, -50, 0.5, -10)
+        bg.Size = UDim2.new(0, 36, 0, 18)
+        bg.Position = UDim2.new(1, -44, 0.5, -9)
         bg.BackgroundColor3 = Theme.MainBg
         bg.BorderSizePixel = 0
         bg.Parent = f
@@ -700,8 +807,8 @@ function Library:CreateWindow(title)
         AddStroke(bg)
         
         local circle = Instance.new("Frame")
-        circle.Size = UDim2.new(0, 16, 0, 16)
-        circle.Position = UDim2.new(0, 2, 0.5, -8)
+        circle.Size = UDim2.new(0, 14, 0, 14)
+        circle.Position = UDim2.new(0, 2, 0.5, -7)
         circle.BackgroundColor3 = Theme.TextDim
         circle.BorderSizePixel = 0
         circle.Parent = bg
@@ -713,10 +820,10 @@ function Library:CreateWindow(title)
         
         local function update()
             if toggled then
-                Tween(circle, 0.1, { Position = UDim2.new(0, 22, 0.5, -8) })
+                Tween(circle, 0.1, { Position = UDim2.new(0, 18, 0.5, -7) })
                 circle.BackgroundColor3 = Theme.Accent
             else
-                Tween(circle, 0.1, { Position = UDim2.new(0, 2, 0.5, -8) })
+                Tween(circle, 0.1, { Position = UDim2.new(0, 2, 0.5, -7) })
                 circle.BackgroundColor3 = Theme.TextDim
             end
         end
@@ -752,7 +859,7 @@ function Library:CreateWindow(title)
     -- ФУНКЦИЯ: SLIDER
     -- ========================================================================
     function WindowObj:CreateSlider(parent, text, flag, min, max, default, callback)
-        local f = CreateBase(parent.Page, 45, text)
+        local f = CreateBase(GetElementParent(parent), 45, text)
         
         local valLabel = Instance.new("TextLabel")
         valLabel.Size = UDim2.new(0, 50, 0, 20)
@@ -847,11 +954,11 @@ function Library:CreateWindow(title)
     -- ФУНКЦИЯ: DROPDOWN
     -- ========================================================================
     function WindowObj:CreateDropdown(parent, text, flag, options, default, callback)
-        local f = CreateBase(parent.Page, 35, text)
+        local f = CreateBase(GetElementParent(parent), 35, text)
         
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 100, 0, 20)
-        btn.Position = UDim2.new(1, -110, 0.5, -10)
+        btn.Size = UDim2.new(0.52, -8, 0, 22)
+        btn.Position = UDim2.new(0.48, 0, 0.5, -11)
         btn.BackgroundColor3 = Theme.MainBg
         btn.Text = default or "Select"
         btn.TextColor3 = Theme.Text
@@ -863,8 +970,8 @@ function Library:CreateWindow(title)
         AddStroke(btn)
         
         local list = Instance.new("ScrollingFrame")
-        list.Size = UDim2.new(0, 100, 0, 0)
-        list.Position = UDim2.new(1, -110, 1, 2)
+        list.Size = UDim2.new(0.52, -8, 0, 0)
+        list.Position = UDim2.new(0.48, 0, 1, 2)
         list.BackgroundColor3 = Theme.TopBarBg
         list.Visible = false
         list.ZIndex = 20
@@ -883,7 +990,7 @@ function Library:CreateWindow(title)
 
         for _, opt in pairs(options) do
             local optBtn = Instance.new("TextButton")
-            optBtn.Size = UDim2.new(1, 0, 0, 20)
+            optBtn.Size = UDim2.new(1, 0, 0, 22)
             optBtn.BackgroundColor3 = Theme.TopBarBg
             optBtn.Text = tostring(opt)
             optBtn.TextColor3 = Theme.TextDim
@@ -897,7 +1004,7 @@ function Library:CreateWindow(title)
                 Library.Flags[flag] = opt
                 btn.Text = tostring(opt)
                 list.Visible = false
-                list.Size = UDim2.new(0, 100, 0, 0)
+                list.Size = UDim2.new(0.52, -8, 0, 0)
                 
                 if callback then 
                     callback(opt) 
@@ -911,9 +1018,9 @@ function Library:CreateWindow(title)
             list.Visible = not list.Visible
             
             if list.Visible then
-                Tween(list, 0.2, { Size = UDim2.new(0, 100, 0, math.min(#options * 20 + 4, 100)) })
+                Tween(list, 0.2, { Size = UDim2.new(0.52, -8, 0, math.min(#options * 22 + 4, 110)) })
             else
-                Tween(list, 0.2, { Size = UDim2.new(0, 100, 0, 0) })
+                Tween(list, 0.2, { Size = UDim2.new(0.52, -8, 0, 0) })
             end
         end)
     end
@@ -922,11 +1029,11 @@ function Library:CreateWindow(title)
     -- ФУНКЦИЯ: KEYBIND
     -- ========================================================================
     function WindowObj:CreateKeybind(parent, text, flag, default, callback)
-        local f = CreateBase(parent.Page, 35, text)
+        local f = CreateBase(GetElementParent(parent), 35, text)
         
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 80, 0, 20)
-        btn.Position = UDim2.new(1, -90, 0.5, -10)
+        btn.Size = UDim2.new(0.42, -8, 0, 22)
+        btn.Position = UDim2.new(0.58, 0, 0.5, -11)
         btn.BackgroundColor3 = Theme.MainBg
         btn.Text = default and tostring(default) or "None"
         btn.TextColor3 = Theme.Text
@@ -972,11 +1079,11 @@ function Library:CreateWindow(title)
     -- ФУНКЦИЯ: TEXTBOX
     -- ========================================================================
     function WindowObj:CreateTextBox(parent, text, flag, default, callback)
-        local f = CreateBase(parent.Page, 35, text)
+        local f = CreateBase(GetElementParent(parent), 35, text)
         
         local box = Instance.new("TextBox")
-        box.Size = UDim2.new(0, 150, 0, 20)
-        box.Position = UDim2.new(1, -160, 0.5, -10)
+        box.Size = UDim2.new(0.55, -8, 0, 22)
+        box.Position = UDim2.new(0.45, 0, 0.5, -11)
         box.BackgroundColor3 = Theme.MainBg
         box.Text = default or ""
         box.PlaceholderText = "Enter text..."
