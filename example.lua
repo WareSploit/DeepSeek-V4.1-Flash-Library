@@ -1,34 +1,29 @@
 --[[
     DeepSeek V4.1-Flash - Example Script
     Author: WareSploit
-    Вставь этот код в LocalScript (в StarterPlayerScripts)
 ]]
 
--- Твоя ссылка на raw-файл с GitHub
+-- ✅ Твоя прямая raw-ссылка на GitHub
 local LibraryURL = "https://raw.githubusercontent.com/WareSploit/DeepSeek-V4.1-Flash-Library/main/main.lua"
 
--- Загружаем библиотеку
 local success, Library = pcall(function()
     return loadstring(game:HttpGet(LibraryURL))()
 end)
 
 if not success then
-    return warn("Не удалось загрузить библиотеку. Проверь ссылку и наличие файла Main.lua в репозитории.")
+    return warn("Не удалось загрузить библиотеку. Проверь ссылку и наличие файла main.lua в репозитории.")
 end
 
--- Создаем окно
 local Window = Library:CreateWindow("DeepSeek V4.1-Flash")
 
--- Уведомление при запуске
 Library:Notify("DeepSeek", "Библиотека успешно загружена!", 5)
 
--- Создаем вкладки
 local MainTab = Window:CreateTab("Main")
 local VisualTab = Window:CreateTab("Visuals")
 local MiscTab = Window:CreateTab("Misc")
 
 -- ==========================================
--- ЗАПОЛНЯЕМ ВКЛАДКУ MAIN
+-- MAIN TAB
 -- ==========================================
 MainTab:CreateLabel(MainTab, "Настройки игрока")
 
@@ -47,7 +42,7 @@ MainTab:CreateDropdown(MainTab, "Select Mode", "Mode", {"Legit", "Rage", "Silent
 end)
 
 -- ==========================================
--- ЗАПОЛНЯЕМ ВКЛАДКУ VISUALS
+-- VISUALS TAB
 -- ==========================================
 VisualTab:CreateLabel(VisualTab, "Визуальные настройки")
 
@@ -60,7 +55,7 @@ VisualTab:CreateColorPicker(VisualTab, "ESP Color", "EspColor", Color3.fromRGB(2
 end)
 
 -- ==========================================
--- ЗАПОЛНЯЕМ ВКЛАДКУ MISC
+-- MISC TAB
 -- ==========================================
 MiscTab:CreateLabel(MiscTab, "Разное")
 
@@ -73,7 +68,6 @@ MiscTab:CreateButton(MiscTab, "Нажми меня", function()
 end)
 
 -- ==========================================
--- АВТОМАТИЧЕСКАЯ ВКЛАДКА КОНФИГОВ
+-- CONFIGS TAB
 -- ==========================================
--- Она сама создаст 4-ю вкладку "Configs" с полем ввода и кнопками Save/Load/Delete
 Library:BuildConfigTab(Window)
