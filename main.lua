@@ -1,17 +1,11 @@
 --[[
 ================================================================================
     DeepSeek V4.1-Flash UI Library
-    Version: 3.5.0 (Ultimate Full Release)
+    Version: 4.5.0 (Full English, Complete Code, Icon Restored)
     Author: WareSploit & DeepSeek
-    Description: Полноценная, многофункциональная UI-библиотека с поддержкой 
-                 перетаскивания, конфигов, уведомлений, ColorPicker и всех 
-                 базовых элементов интерфейса. Без иконок и эмодзи.
 ================================================================================
 ]]
 
--- ============================================================================
--- СЕРВИСЫ
--- ============================================================================
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -22,16 +16,14 @@ local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- ============================================================================
--- КОНФИГУРАЦИЯ И ПЕРЕМЕННЫЕ
--- ============================================================================
 local Library = {}
 Library.Flags = {}
 Library.ConfigFolder = "DeepSeek_Configs"
 Library.Connections = {}
-Library.Notifications = {}
 
--- Палитра цветов (основана на исходном дизайне)
+-- ============================================================================
+-- THEME / COLORS
+-- ============================================================================
 local Theme = {
     MainBg = Color3.fromRGB(0, 50, 149),
     MainBgTrans = 0.15,
@@ -43,13 +35,11 @@ local Theme = {
     Stroke = Color3.fromRGB(0, 39, 114),
     Text = Color3.fromRGB(255, 255, 255),
     TextDim = Color3.fromRGB(170, 170, 170),
-    Accent = Color3.fromRGB(0, 150, 255),
-    Red = Color3.fromRGB(200, 50, 50),
-    Green = Color3.fromRGB(50, 200, 50)
+    Accent = Color3.fromRGB(0, 150, 255)
 }
 
 -- ============================================================================
--- УТИЛИТЫ ДЛЯ СОЗДАНИЯ ОБЪЕКТОВ
+-- UTILITIES
 -- ============================================================================
 local function Create(className, properties, parent)
     local obj = Instance.new(className)
@@ -76,30 +66,23 @@ local function AddCorner(obj, radius)
     }, obj)
 end
 
-local function AddGradient(obj, rotation, color1, color2)
+local function AddGradient(obj)
     return Create("UIGradient", {
-        Rotation = rotation or 123,
+        Rotation = 123,
         Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, color1 or Color3.fromRGB(4, 42, 87)),
-            ColorSequenceKeypoint.new(1, color2 or Color3.fromRGB(255, 255, 255))
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(4, 42, 87)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
         }
     }, obj)
 end
 
 local function Tween(obj, time, props)
-    local tweenInfo = TweenInfo.new(
-        time or 0.2,
-        Enum.EasingStyle.Quad,
-        Enum.EasingDirection.Out
-    )
+    local tweenInfo = TweenInfo.new(time or 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     local tween = TweenService:Create(obj, tweenInfo, props)
     tween:Play()
     return tween
 end
 
--- ============================================================================
--- УТИЛИТА ДЛЯ DRAG & DROP (ПЕРЕТАСКИВАНИЕ)
--- ============================================================================
 local function MakeDraggable(frame, dragArea)
     local dragging = false
     local dragInput = nil
@@ -112,7 +95,6 @@ local function MakeDraggable(frame, dragArea)
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
-            
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -131,18 +113,13 @@ local function MakeDraggable(frame, dragArea)
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
-            frame.Position = UDim2.new(
-                startPos.X.Scale, 
-                startPos.X.Offset + delta.X, 
-                startPos.Y.Scale, 
-                startPos.Y.Offset + delta.Y
-            )
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 end
 
 -- ============================================================================
--- СИСТЕМА УВЕДОМЛЕНИЙ (NOTIFICATIONS)
+-- NOTIFICATIONS
 -- ============================================================================
 local NotifGui = Create("ScreenGui", {
     Name = "DeepSeekNotifications",
@@ -164,7 +141,6 @@ Create("UIListLayout", {
 
 function Library:Notify(title, text, duration)
     duration = duration or 3
-    
     local notif = Create("Frame", {
         Size = UDim2.new(1, 0, 0, 60),
         BackgroundColor3 = Theme.MainBg,
@@ -172,7 +148,6 @@ function Library:Notify(title, text, duration)
         BorderSizePixel = 0,
         Position = UDim2.new(1, 260, 0, 0)
     }, NotifFrame)
-    
     AddCorner(notif)
     AddStroke(notif)
     AddGradient(notif)
@@ -201,20 +176,14 @@ function Library:Notify(title, text, duration)
     }, notif)
 
     Tween(notif, 0.3, { Position = UDim2.new(0, 0, 0, 0) })
-
     task.delay(duration, function()
-        local outTween = Tween(notif, 0.3, {
-            Position = UDim2.new(1, 260, 0, 0),
-            BackgroundTransparency = 1
-        })
-        outTween.Completed:Connect(function()
-            notif:Destroy()
-        end)
+        local outTween = Tween(notif, 0.3, { Position = UDim2.new(1, 260, 0, 0), BackgroundTransparency = 1 })
+        outTween.Completed:Connect(function() notif:Destroy() end)
     end)
 end
 
 -- ============================================================================
--- СОЗДАНИЕ ГЛАВНОГО ОКНА
+-- MAIN WINDOW CREATION
 -- ============================================================================
 function Library:CreateWindow(title)
     local ScreenGui = Create("ScreenGui", {
@@ -224,9 +193,7 @@ function Library:CreateWindow(title)
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     }, LocalPlayer:WaitForChild("PlayerGui"))
 
-    -- ------------------------------------------------------------------------
-    -- OPEN FRAME (Свернутое состояние)
-    -- ------------------------------------------------------------------------
+    -- OPEN FRAME (Minimized)
     local OpenFrame = Create("Frame", {
         Name = "OpenFrame",
         Size = UDim2.new(0, 304, 0, 47),
@@ -266,9 +233,18 @@ function Library:CreateWindow(title)
     AddCorner(OpenBtn)
     AddStroke(OpenBtn)
 
-    -- ------------------------------------------------------------------------
-    -- MAIN FRAME (Основное окно)
-    -- ------------------------------------------------------------------------
+    -- ICON (Open Frame)
+    local OpenIcon = Create("ImageLabel", {
+        Size = UDim2.new(0, 42, 0, 41),
+        Position = UDim2.new(0.86, 0, 0.06, 0),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://121267808310974",
+        BorderSizePixel = 0
+    }, OpenFrame)
+    AddCorner(OpenIcon)
+    AddGradient(OpenIcon)
+
+    -- MAIN FRAME
     local MainFrame = Create("Frame", {
         Name = "MainFrame",
         Size = UDim2.new(0, 550, 0, 349),
@@ -281,7 +257,7 @@ function Library:CreateWindow(title)
     AddStroke(MainFrame)
     AddGradient(MainFrame)
 
-    -- TopBar
+    -- TOP BAR
     local TopBar = Create("Frame", {
         Name = "TopBar",
         Size = UDim2.new(1, 0, 0, 42),
@@ -294,6 +270,17 @@ function Library:CreateWindow(title)
     AddStroke(TopBar)
     MakeDraggable(MainFrame, TopBar)
 
+    -- ICON (Top Bar)
+    local TopBarIcon = Create("ImageLabel", {
+        Size = UDim2.new(0, 42, 0, 41),
+        Position = UDim2.new(0.015, 0, 0, 0),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://121267808310974",
+        BorderSizePixel = 0
+    }, TopBar)
+    AddCorner(TopBarIcon)
+    AddGradient(TopBarIcon)
+
     Create("TextLabel", {
         Size = UDim2.new(0, 150, 1, 0),
         Position = UDim2.new(0.12, 0, 0, 0),
@@ -305,7 +292,6 @@ function Library:CreateWindow(title)
         TextXAlignment = Enum.TextXAlignment.Left
     }, TopBar)
 
-    -- Инфо о экзекуторе
     local ExecName = "Studio"
     if identifyexecutor then
         local success, name = pcall(identifyexecutor)
@@ -322,7 +308,6 @@ function Library:CreateWindow(title)
         TextSize = 14
     }, TopBar)
 
-    -- Инфо об игроках
     local PlayerCountLabel = Create("TextLabel", {
         Size = UDim2.new(0, 93, 0, 34),
         Position = UDim2.new(0.67, 0, 0.09, 0),
@@ -332,17 +317,10 @@ function Library:CreateWindow(title)
         Font = Enum.Font.Gotham,
         TextSize = 14
     }, TopBar)
-    
-    local pAddConn = Players.PlayerAdded:Connect(function() 
-        PlayerCountLabel.Text = "Players: " .. #Players:GetPlayers() 
-    end)
-    local pRemConn = Players.PlayerRemoving:Connect(function() 
-        PlayerCountLabel.Text = "Players: " .. #Players:GetPlayers() 
-    end)
-    table.insert(Library.Connections, pAddConn)
-    table.insert(Library.Connections, pRemConn)
 
-    -- Кнопки управления окном
+    table.insert(Library.Connections, Players.PlayerAdded:Connect(function() PlayerCountLabel.Text = "Players: " .. #Players:GetPlayers() end))
+    table.insert(Library.Connections, Players.PlayerRemoving:Connect(function() PlayerCountLabel.Text = "Players: " .. #Players:GetPlayers() end))
+
     local MinBtn = Create("TextButton", {
         Size = UDim2.new(0, 26, 0, 27),
         Position = UDim2.new(1, -65, 0.16, 0),
@@ -371,7 +349,7 @@ function Library:CreateWindow(title)
     AddCorner(CloseBtn)
     AddStroke(CloseBtn)
 
-    -- SideBar
+    -- SIDEBAR
     local SideBar = Create("Frame", {
         Name = "SideBar",
         Size = UDim2.new(0, 120, 0, 307),
@@ -387,12 +365,13 @@ function Library:CreateWindow(title)
         Size = UDim2.new(1, 0, 0, 250),
         BackgroundTransparency = 1
     }, SideBar)
+    
     Create("UIListLayout", {
         SortOrder = Enum.SortOrder.LayoutOrder,
         Padding = UDim.new(0, 4)
     }, TabList)
 
-    -- Инфо об игроке (внизу сайдбара)
+    -- PLAYER INFO
     local PlayerInfoFrame = Create("Frame", {
         Size = UDim2.new(0, 120, 0, 58),
         Position = UDim2.new(0, 0, 0.81, 0),
@@ -432,7 +411,7 @@ function Library:CreateWindow(title)
         if success and content then Avatar.Image = content end
     end)
 
-    -- PageFrame (Рабочая область)
+    -- PAGE FRAME
     local PageFrame = Create("Frame", {
         Name = "PageFrame",
         Size = UDim2.new(0, 429, 0, 307),
@@ -444,35 +423,25 @@ function Library:CreateWindow(title)
     AddCorner(PageFrame)
     AddStroke(PageFrame)
 
-    -- Логика сворачивания / закрытия
-    MinBtn.MouseButton1Click:Connect(function()
-        MainFrame.Visible = false
-        OpenFrame.Visible = true
-    end)
-    
-    OpenBtn.MouseButton1Click:Connect(function()
-        MainFrame.Visible = true
-        OpenFrame.Visible = false
-    end)
-    
+    -- WINDOW CONTROLS
+    MinBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false; OpenFrame.Visible = true end)
+    OpenBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenFrame.Visible = false end)
     CloseBtn.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
         if NotifGui then NotifGui:Destroy() end
         for _, conn in pairs(Library.Connections) do
-            if typeof(conn) == "RBXScriptConnection" then
-                conn:Disconnect()
-            end
+            if typeof(conn) == "RBXScriptConnection" then conn:Disconnect() end
         end
     end)
 
     local WindowObj = { Tabs = {}, CurrentTab = nil }
 
     -- ========================================================================
-    -- ЛОГИКА СОЗДАНИЯ ВКЛАДОК
+    -- TABS
     -- ========================================================================
     function WindowObj:CreateTab(name)
         if #WindowObj.Tabs >= 8 then
-            Library:Notify("Ошибка", "Достигнут лимит вкладок (максимум 8).", 3)
+            Library:Notify("Error", "Max 8 tabs reached.", 3)
             return nil
         end
 
@@ -489,7 +458,6 @@ function Library:CreateWindow(title)
         AddCorner(TabBtn)
         AddStroke(TabBtn)
 
-        -- Линия подсветки (активная вкладка)
         local Line = Create("Frame", {
             Size = UDim2.new(0, 3, 1, 0),
             BackgroundColor3 = Theme.Accent,
@@ -497,7 +465,6 @@ function Library:CreateWindow(title)
             Visible = false
         }, TabBtn)
 
-        -- Контейнер контента
         local Page = Create("ScrollingFrame", {
             Size = UDim2.new(1, -10, 1, -10),
             Position = UDim2.new(0, 5, 0, 5),
@@ -534,16 +501,13 @@ function Library:CreateWindow(title)
         end)
 
         table.insert(WindowObj.Tabs, tabObj)
-        
-        if #WindowObj.Tabs == 1 then
-            task.defer(function() TabBtn:Fire("MouseButton1Click") end)
-        end
+        if #WindowObj.Tabs == 1 then task.defer(function() TabBtn:Fire("MouseButton1Click") end) end
 
         return tabObj
     end
 
     -- ========================================================================
-    -- БАЗОВЫЙ КОНТЕЙНЕР ДЛЯ ЭЛЕМЕНТОВ
+    -- BASE ELEMENT
     -- ========================================================================
     local function CreateBase(parent, height, text)
         local f = Create("Frame", {
@@ -571,35 +535,32 @@ function Library:CreateWindow(title)
     end
 
     -- ========================================================================
-    -- ЭЛЕМЕНТЫ ИНТЕРФЕЙСА
+    -- ELEMENTS
     -- ========================================================================
-
-    -- 1. Label (Текст)
+    
+    -- 1. Label
     function WindowObj:CreateLabel(parent, text)
         local f = CreateBase(parent.Page, 25, text)
         f.BackgroundTransparency = 1
-        for _, child in pairs(f:GetChildren()) do
-            if child:IsA("UIStroke") then child:Destroy() end
-        end
+        for _, child in pairs(f:GetChildren()) do if child:IsA("UIStroke") then child:Destroy() end end
     end
 
-    -- 2. Button (Кнопка)
+    -- 2. Button
     function WindowObj:CreateButton(parent, text, callback)
         local f = CreateBase(parent.Page, 35, "")
-        local btn = Create("TextButton", {
+        Create("TextButton", {
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1,
             Text = text,
             TextColor3 = Theme.Text,
             Font = Enum.Font.Gotham,
             TextSize = 14
-        }, f)
-        btn.MouseButton1Click:Connect(function()
+        }, f).MouseButton1Click:Connect(function()
             if callback then callback() end
         end)
     end
 
-    -- 3. Toggle (Тумблер)
+    -- 3. Toggle
     function WindowObj:CreateToggle(parent, text, flag, default, callback)
         local f = CreateBase(parent.Page, 35, text)
         local bg = Create("Frame", {
@@ -643,11 +604,10 @@ function Library:CreateWindow(title)
             update()
             if callback then callback(toggled) end
         end)
-        
         return { Set = function(v) toggled = v; Library.Flags[flag] = v; update() end }
     end
 
-    -- 4. Slider (Ползунок)
+    -- 4. Slider
     function WindowObj:CreateSlider(parent, text, flag, min, max, default, callback)
         local f = CreateBase(parent.Page, 45, text)
         
@@ -710,25 +670,21 @@ function Library:CreateWindow(title)
             Text = ""
         }, bg).MouseButton1Down:Connect(function() dragging = true end)
         
-        local inputEndConn = UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = false
-            end
-        end)
-        table.insert(Library.Connections, inputEndConn)
+        table.insert(Library.Connections, UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+        end))
         
-        local renderConn = RunService.RenderStepped:Connect(function()
+        table.insert(Library.Connections, RunService.RenderStepped:Connect(function()
             if dragging then
                 local pos = math.clamp((Mouse.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
                 updateValue(min + (max - min) * pos)
             end
-        end)
-        table.insert(Library.Connections, renderConn)
+        end))
 
         return { Set = function(v) updateValue(v) end }
     end
 
-    -- 5. Dropdown (Выпадающий список)
+    -- 5. Dropdown
     function WindowObj:CreateDropdown(parent, text, flag, options, default, callback)
         local f = CreateBase(parent.Page, 35, text)
         
@@ -755,10 +711,7 @@ function Library:CreateWindow(title)
         AddCorner(list)
         AddStroke(list)
         
-        local layout = Create("UIListLayout", {
-            SortOrder = Enum.SortOrder.LayoutOrder
-        }, list)
-
+        local layout = Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, list)
         Library.Flags[flag] = default or options[1]
 
         for _, opt in pairs(options) do
@@ -790,7 +743,7 @@ function Library:CreateWindow(title)
         end)
     end
 
-    -- 6. Keybind (Бинд клавиши)
+    -- 6. Keybind
     function WindowObj:CreateKeybind(parent, text, flag, default, callback)
         local f = CreateBase(parent.Page, 35, text)
         
@@ -815,7 +768,7 @@ function Library:CreateWindow(title)
             btn.Text = "..."
         end)
 
-        local inputConn = UserInputService.InputBegan:Connect(function(input)
+        table.insert(Library.Connections, UserInputService.InputBegan:Connect(function(input)
             if isBinding then
                 if input.KeyCode ~= Enum.KeyCode.Unknown then
                     currentKey = input.KeyCode
@@ -827,11 +780,10 @@ function Library:CreateWindow(title)
             elseif input.KeyCode == currentKey and currentKey then
                 if callback then callback(currentKey) end
             end
-        end)
-        table.insert(Library.Connections, inputConn)
+        end))
     end
 
-    -- 7. TextBox (Поле ввода)
+    -- 7. TextBox
     function WindowObj:CreateTextBox(parent, text, flag, default, callback)
         local f = CreateBase(parent.Page, 35, text)
         
@@ -840,7 +792,7 @@ function Library:CreateWindow(title)
             Position = UDim2.new(1, -160, 0.5, -10),
             BackgroundColor3 = Theme.MainBg,
             Text = default or "",
-            PlaceholderText = "Введите...",
+            PlaceholderText = "Enter text...",
             TextColor3 = Theme.Text,
             Font = Enum.Font.Gotham,
             TextSize = 12,
@@ -857,287 +809,83 @@ function Library:CreateWindow(title)
         end)
     end
 
-    -- 8. ColorPicker (Выбор цвета)
-    function WindowObj:CreateColorPicker(parent, text, flag, default, callback)
-        local f = CreateBase(parent.Page, 35, text)
-        
-        local btn = Create("TextButton", {
-            Size = UDim2.new(0, 50, 0, 20),
-            Position = UDim2.new(1, -60, 0.5, -10),
-            BackgroundColor3 = default or Color3.new(1,1,1),
-            Text = "",
-            TextColor3 = Theme.Text
-        }, f)
-        AddCorner(btn)
-        AddStroke(btn)
-        
-        Library.Flags[flag] = default or Color3.new(1,1,1)
-
-        local pickerFrame = Create("Frame", {
-            Size = UDim2.new(1, 0, 0, 100),
-            BackgroundColor3 = Theme.MainBg,
-            Visible = false,
-            ZIndex = 10,
-            BorderSizePixel = 0
-        }, f)
-        AddCorner(pickerFrame)
-        AddStroke(pickerFrame)
-
-        -- Hue полоса
-        local hueBar = Create("Frame", {
-            Size = UDim2.new(1, -20, 0, 15),
-            Position = UDim2.new(0, 10, 0, 10),
-            BackgroundColor3 = Color3.new(1,0,0),
-            BorderSizePixel = 0
-        }, pickerFrame)
-        AddCorner(hueBar)
-        
-        Create("UIGradient", {
-            Color = ColorSequence.new{
-                ColorSequenceKeypoint.new(0, Color3.new(1,0,0)),
-                ColorSequenceKeypoint.new(0.16, Color3.new(1,1,0)),
-                ColorSequenceKeypoint.new(0.33, Color3.new(0,1,0)),
-                ColorSequenceKeypoint.new(0.5, Color3.new(0,1,1)),
-                ColorSequenceKeypoint.new(0.66, Color3.new(0,0,1)),
-                ColorSequenceKeypoint.new(0.83, Color3.new(1,0,1)),
-                ColorSequenceKeypoint.new(1, Color3.new(1,0,0))
-            }
-        }, hueBar)
-
-        local hueCircle = Create("Frame", {
-            Size = UDim2.new(0, 10, 0, 20),
-            Position = UDim2.new(0, 0, 0.5, -10),
-            BackgroundColor3 = Color3.new(1,1,1),
-            BorderSizePixel = 0
-        }, hueBar)
-        AddCorner(hueCircle)
-
-        -- Saturation/Value квадрат
-        local svFrame = Create("Frame", {
-            Size = UDim2.new(1, -20, 0, 50),
-            Position = UDim2.new(0, 10, 0, 35),
-            BackgroundColor3 = Color3.new(1,0,0),
-            BorderSizePixel = 0
-        }, pickerFrame)
-        AddCorner(svFrame)
-        
-        Create("UIGradient", {
-            Color = ColorSequence.new{
-                ColorSequenceKeypoint.new(0, Color3.new(1,1,1)),
-                ColorSequenceKeypoint.new(1, Color3.new(1,0,0))
-            },
-            Rotation = 0
-        }, svFrame)
-        
-        Create("UIGradient", {
-            Color = ColorSequence.new{
-                ColorSequenceKeypoint.new(0, Color3.new(0,0,0)),
-                ColorSequenceKeypoint.new(1, Color3.new(1,1,1))
-            },
-            Rotation = 90
-        }, svFrame)
-        
-        local svCircle = Create("Frame", {
-            Size = UDim2.new(0, 10, 0, 10),
-            Position = UDim2.new(0, 0, 0, 0),
-            BackgroundColor3 = Color3.new(1,1,1),
-            BorderSizePixel = 0
-        }, svFrame)
-        AddCorner(svCircle, 10)
-
-        local function updateColor()
-            local h = hueCircle.Position.X.Scale
-            local s = svCircle.Position.X.Scale
-            local v = 1 - svCircle.Position.Y.Scale
-            
-            local color = Color3.fromHSV(h, s, v)
-            btn.BackgroundColor3 = color
-            Library.Flags[flag] = color
-            if callback then callback(color) end
-        end
-
-        -- Hue Drag
-        local hueDrag = false
-        Create("TextButton", {
-            Size = UDim2.new(1, 0, 1, 0),
-            BackgroundTransparency = 1,
-            Text = ""
-        }, hueBar).MouseButton1Down:Connect(function() hueDrag = true end)
-        
-        local hueEnd = UserInputService.InputEnded:Connect(function(i)
-            if i.UserInputType == Enum.UserInputType.MouseButton1 then hueDrag = false end
-        end)
-        table.insert(Library.Connections, hueEnd)
-        
-        local hueRender = RunService.RenderStepped:Connect(function()
-            if hueDrag then
-                local p = math.clamp((Mouse.X - hueBar.AbsolutePosition.X) / hueBar.AbsoluteSize.X, 0, 1)
-                hueCircle.Position = UDim2.new(p, 0, 0.5, -10)
-                updateColor()
-            end
-        end)
-        table.insert(Library.Connections, hueRender)
-
-        -- SV Drag
-        local svDrag = false
-        Create("TextButton", {
-            Size = UDim2.new(1, 0, 1, 0),
-            BackgroundTransparency = 1,
-            Text = ""
-        }, svFrame).MouseButton1Down:Connect(function() svDrag = true end)
-        
-        local svEnd = UserInputService.InputEnded:Connect(function(i)
-            if i.UserInputType == Enum.UserInputType.MouseButton1 then svDrag = false end
-        end)
-        table.insert(Library.Connections, svEnd)
-        
-        local svRender = RunService.RenderStepped:Connect(function()
-            if svDrag then
-                local x = math.clamp((Mouse.X - svFrame.AbsolutePosition.X) / svFrame.AbsoluteSize.X, 0, 1)
-                local y = math.clamp((Mouse.Y - svFrame.AbsolutePosition.Y) / svFrame.AbsoluteSize.Y, 0, 1)
-                svCircle.Position = UDim2.new(x, -5, y, -5)
-                updateColor()
-            end
-        end)
-        table.insert(Library.Connections, svRender)
-
-        btn.MouseButton1Click:Connect(function()
-            pickerFrame.Visible = not pickerFrame.Visible
-            if pickerFrame.Visible then
-                f.Size = UDim2.new(1, 0, 0, 135)
-            else
-                f.Size = UDim2.new(1, 0, 0, 35)
-            end
-        end)
-    end
-
     return WindowObj
 end
 
 -- ============================================================================
--- СИСТЕМА КОНФИГОВ (СОХРАНЕНИЕ / ЗАГРУЗКА)
+-- CONFIGS SYSTEM (ENGLISH UI)
 -- ============================================================================
 function Library:SaveConfig(name)
-    if not writefile then
-        Library:Notify("Ошибка", "Executor doesn't support writefile", 3)
-        return
-    end
+    if not writefile then Library:Notify("Error", "Executor does not support writefile", 3); return end
+    if not isfolder(Library.ConfigFolder) then makefolder(Library.ConfigFolder) end
     
-    if not isfolder(Library.ConfigFolder) then
-        makefolder(Library.ConfigFolder)
-    end
-    
-    local serializedFlags = {}
+    local serialized = {}
     for flag, value in pairs(Library.Flags) do
-        if typeof(value) == "Color3" then
-            serializedFlags[flag] = { Type = "Color3", R = value.R, G = value.G, B = value.B }
-        elseif typeof(value) == "EnumItem" then
-            serializedFlags[flag] = { Type = "EnumItem", Value = value.Name }
-        else
-            serializedFlags[flag] = value
-        end
+        if typeof(value) == "Color3" then serialized[flag] = { Type = "Color3", R = value.R, G = value.G, B = value.B }
+        elseif typeof(value) == "EnumItem" then serialized[flag] = { Type = "EnumItem", Value = value.Name }
+        else serialized[flag] = value end
     end
     
-    local success, encoded = pcall(function()
-        return HttpService:JSONEncode(serializedFlags)
-    end)
-    
-    if success then
+    local success, encoded = pcall(function() return HttpService:JSONEncode(serialized) end)
+    if success then 
         writefile(Library.ConfigFolder .. "/" .. name .. ".json", encoded)
-        Library:Notify("Успех", "Конфиг '" .. name .. "' сохранен!", 3)
-    else
-        Library:Notify("Ошибка", "Не удалось сохранить конфиг", 3)
+        Library:Notify("Success", "Config '" .. name .. "' saved!", 3)
+    else 
+        Library:Notify("Error", "Failed to save config", 3) 
     end
 end
 
 function Library:LoadConfig(name)
-    if not readfile then
-        Library:Notify("Ошибка", "Executor doesn't support readfile", 3)
-        return
-    end
-    
+    if not readfile then Library:Notify("Error", "Executor does not support readfile", 3); return end
     local path = Library.ConfigFolder .. "/" .. name .. ".json"
     if isfile(path) then
-        local success, decoded = pcall(function()
-            return HttpService:JSONDecode(readfile(path))
-        end)
-        
+        local success, decoded = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
         if success then
             for flag, value in pairs(decoded) do
-                if type(value) == "table" and value.Type == "Color3" then
-                    Library.Flags[flag] = Color3.new(value.R, value.G, value.B)
-                elseif type(value) == "table" and value.Type == "EnumItem" then
-                    Library.Flags[flag] = Enum.KeyCode[value.Value]
-                else
-                    Library.Flags[flag] = value
-                end
+                if type(value) == "table" and value.Type == "Color3" then Library.Flags[flag] = Color3.new(value.R, value.G, value.B)
+                elseif type(value) == "table" and value.Type == "EnumItem" then Library.Flags[flag] = Enum.KeyCode[value.Value]
+                else Library.Flags[flag] = value end
             end
-            Library:Notify("Успех", "Конфиг '" .. name .. "' загружен!", 3)
-        else
-            Library:Notify("Ошибка", "Файл конфига поврежден", 3)
+            Library:Notify("Success", "Config '" .. name .. "' loaded!", 3)
+        else 
+            Library:Notify("Error", "Config file is corrupted", 3) 
         end
-    else
-        Library:Notify("Ошибка", "Конфиг не найден", 3)
+    else 
+        Library:Notify("Error", "Config not found", 3) 
     end
 end
 
 function Library:DeleteConfig(name)
-    if not delfile then
-        Library:Notify("Ошибка", "delfile не поддерживается", 3)
-        return
-    end
-    
+    if not delfile then Library:Notify("Error", "Executor does not support delfile", 3); return end
     local path = Library.ConfigFolder .. "/" .. name .. ".json"
-    if isfile(path) then
+    if isfile(path) then 
         delfile(path)
-        Library:Notify("Успех", "Конфиг '" .. name .. "' удален!", 3)
+        Library:Notify("Success", "Config '" .. name .. "' deleted!", 3)
     else
-        Library:Notify("Ошибка", "Конфиг не найден", 3)
+        Library:Notify("Error", "Config not found", 3)
     end
 end
 
-function Library:GetConfigs()
-    if not listfiles then return {} end
-    local files = listfiles(Library.ConfigFolder)
-    local configs = {}
-    
-    for _, file in pairs(files) do
-        local name = file:match("([^/]+)%.json$")
-        if name then
-            table.insert(configs, name)
-        end
-    end
-    
-    return configs
-end
-
--- ============================================================================
--- АВТОМАТИЧЕСКИЙ КОНСТРУКТОР ВКЛАДКИ КОНФИГОВ
--- ============================================================================
 function Library:BuildConfigTab(window)
     local ConfigTab = window:CreateTab("Configs")
     if not ConfigTab then return end
-    
     local currentConfig = "default"
     
-    ConfigTab:CreateTextBox(ConfigTab, "Имя конфига", "ConfigNameBox", "default", function(text)
-        currentConfig = text
+    ConfigTab:CreateTextBox(ConfigTab, "Config Name", "ConfigNameBox", "default", function(text) 
+        currentConfig = text 
     end)
-
-    ConfigTab:CreateButton(ConfigTab, "Сохранить конфиг", function()
-        Library:SaveConfig(currentConfig)
+    
+    ConfigTab:CreateButton(ConfigTab, "Save Config", function() 
+        Library:SaveConfig(currentConfig) 
     end)
-
-    ConfigTab:CreateButton(ConfigTab, "Загрузить конфиг", function()
-        Library:LoadConfig(currentConfig)
+    
+    ConfigTab:CreateButton(ConfigTab, "Load Config", function() 
+        Library:LoadConfig(currentConfig) 
     end)
-
-    ConfigTab:CreateButton(ConfigTab, "Удалить конфиг", function()
-        Library:DeleteConfig(currentConfig)
+    
+    ConfigTab:CreateButton(ConfigTab, "Delete Config", function() 
+        Library:DeleteConfig(currentConfig) 
     end)
 end
 
--- ============================================================================
--- ВОЗВРАЩАЕМ БИБЛИОТЕКУ
--- ============================================================================
 return Library
