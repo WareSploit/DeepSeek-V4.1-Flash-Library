@@ -456,8 +456,8 @@ function Library:CreateWindow(title)
     AddGradient(PlayerInfoFrame)
 
     local Avatar = Instance.new("ImageLabel")
-    Avatar.Size = UDim2.new(0, 39, 0, 39)
-    Avatar.Position = UDim2.new(0.06, 0, 0.15, 0)
+    Avatar.Size = UDim2.new(0, 34, 0, 34)
+    Avatar.Position = UDim2.new(0, 6, 0.5, -17)
     Avatar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
     Avatar.BorderSizePixel = 0
@@ -467,14 +467,17 @@ function Library:CreateWindow(title)
     AddStroke(Avatar)
     
     local WelcomeText = Instance.new("TextLabel")
-    WelcomeText.Size = UDim2.new(0, 61, 0, 40)
-    WelcomeText.Position = UDim2.new(0.41, 0, 0.15, 0)
+    WelcomeText.Size = UDim2.new(1, -47, 0, 42)
+    WelcomeText.Position = UDim2.new(0, 44, 0.5, -21)
     WelcomeText.BackgroundTransparency = 1
-    WelcomeText.Text = "Welcome,\n" .. LocalPlayer.Name
+    WelcomeText.Text = "Welcome,\n" .. LocalPlayer.DisplayName
     WelcomeText.TextColor3 = Theme.Text
     WelcomeText.Font = Enum.Font.Gotham
-    WelcomeText.TextSize = 12
+    WelcomeText.TextSize = 10
+    WelcomeText.TextWrapped = false
+    WelcomeText.TextTruncate = Enum.TextTruncate.AtEnd
     WelcomeText.TextXAlignment = Enum.TextXAlignment.Left
+    WelcomeText.TextYAlignment = Enum.TextYAlignment.Center
     WelcomeText.Parent = PlayerInfoFrame
 
     task.spawn(function()
@@ -495,8 +498,9 @@ function Library:CreateWindow(title)
     PageFrame.Size = UDim2.new(0, 429, 0, 307)
     PageFrame.Position = UDim2.new(0.218, 0, 0.12, 0)
     PageFrame.BackgroundColor3 = Theme.TopBarBg
-    PageFrame.BackgroundTransparency = Theme.TopBarTrans
+    PageFrame.BackgroundTransparency = 0.18
     PageFrame.BorderSizePixel = 0
+    PageFrame.ClipsDescendants = true
     PageFrame.Parent = MainFrame
     
     AddCorner(PageFrame)
@@ -569,6 +573,7 @@ function Library:CreateWindow(title)
         Page.ScrollBarImageColor3 = Theme.Stroke
         Page.Visible = false
         Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+        Page.AutomaticCanvasSize = Enum.AutomaticSize.None
         Page.Parent = PageFrame
         
         local PageLayout = Instance.new("UIListLayout")
@@ -576,33 +581,37 @@ function Library:CreateWindow(title)
         PageLayout.Padding = UDim.new(0, 6)
         PageLayout.Parent = Page
         
-        PageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageLayout.AbsoluteContentSize.Y + 10)
-        end)
+        local function UpdateCanvas()
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageLayout.AbsoluteContentSize.Y + 12)
+        end
+
+        PageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvas)
+        UpdateCanvas()
 
         local tabObj = { Button = TabBtn, Page = Page, Line = Line }
 
-        TabBtn.MouseButton1Click:Connect(function()
-            for _, t in pairs(WindowObj.Tabs) do
+        local function SelectTab()
+            for _, t in ipairs(WindowObj.Tabs) do
                 t.Page.Visible = false
                 t.Line.Visible = false
                 t.Button.TextColor3 = Theme.TextDim
                 t.Button.BackgroundTransparency = Theme.ElementTrans
             end
-            
+
             Page.Visible = true
             Line.Visible = true
             TabBtn.TextColor3 = Theme.Text
             TabBtn.BackgroundTransparency = 0.3
             WindowObj.CurrentTab = tabObj
-        end)
+        end
 
+        tabObj.Select = SelectTab
+        TabBtn.MouseButton1Click:Connect(SelectTab)
         table.insert(WindowObj.Tabs, tabObj)
-        
-        if #WindowObj.Tabs == 1 then 
-            task.defer(function() 
-                TabBtn:Fire("MouseButton1Click") 
-            end) 
+
+        -- Select the first tab immediately. TextButton does not have :Fire().
+        if #WindowObj.Tabs == 1 then
+            SelectTab()
         end
 
         return tabObj
@@ -792,7 +801,8 @@ function Library:CreateWindow(title)
             Library.Flags[flag] = value
             valLabel.Text = tostring(math.floor(value))
             
-            local percent = (value - min) / (max - min)
+            local range = max - min
+            local percent = range == 0 and 0 or (value - min) / range
             fill.Size = UDim2.new(percent, 0, 1, 0)
             circle.Position = UDim2.new(percent, -7, 0.5, -7)
             
@@ -857,8 +867,9 @@ function Library:CreateWindow(title)
         list.Position = UDim2.new(1, -110, 1, 2)
         list.BackgroundColor3 = Theme.TopBarBg
         list.Visible = false
-        list.ZIndex = 10
+        list.ZIndex = 20
         list.ScrollBarThickness = 2
+        list.BorderSizePixel = 0
         list.Parent = f
         
         AddCorner(list)
@@ -878,6 +889,8 @@ function Library:CreateWindow(title)
             optBtn.TextColor3 = Theme.TextDim
             optBtn.Font = Enum.Font.Gotham
             optBtn.TextSize = 12
+            optBtn.ZIndex = 21
+            optBtn.BorderSizePixel = 0
             optBtn.Parent = list
             
             optBtn.MouseButton1Click:Connect(function()
@@ -915,7 +928,7 @@ function Library:CreateWindow(title)
         btn.Size = UDim2.new(0, 80, 0, 20)
         btn.Position = UDim2.new(1, -90, 0.5, -10)
         btn.BackgroundColor3 = Theme.MainBg
-        btn.Text = tostring(default) or "None"
+        btn.Text = default and tostring(default) or "None"
         btn.TextColor3 = Theme.Text
         btn.Font = Enum.Font.Gotham
         btn.TextSize = 12
