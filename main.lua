@@ -574,6 +574,7 @@ function Library:CreateWindow(title)
         Page.Visible = false
         Page.CanvasSize = UDim2.new(0, 0, 0, 0)
         Page.AutomaticCanvasSize = Enum.AutomaticSize.None
+        Page.ScrollingDirection = Enum.ScrollingDirection.Y
         Page.Parent = PageFrame
         
         Page.ClipsDescendants = true
@@ -613,6 +614,7 @@ function Library:CreateWindow(title)
 
         LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvas)
         RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvas)
+        task.defer(UpdateCanvas)
         UpdateCanvas()
 
         local tabObj = {
@@ -673,12 +675,25 @@ function Library:CreateWindow(title)
     -- ========================================================================
     -- ФУНКЦИЯ: БАЗОВЫЙ КОНТЕЙНЕР ЭЛЕМЕНТА
     -- ========================================================================
+    local function ResolvePage(parent)
+        if typeof(parent) ~= "Instance" then
+            if type(parent) == "table" then
+                parent = parent.Page or parent.Frame
+            end
+        end
+        assert(typeof(parent) == "Instance" and parent:IsA("GuiObject"),
+            "Invalid parent: pass a tab, section, ScrollingFrame, or Frame")
+        return parent
+    end
+
     local function CreateBase(parent, height, text)
+        parent = ResolvePage(parent)
         local f = Instance.new("Frame")
         f.Size = UDim2.new(1, 0, 0, height)
         f.BackgroundColor3 = Theme.ElementBg
         f.BackgroundTransparency = 0.35
         f.BorderSizePixel = 0
+        f.LayoutOrder = #parent:GetChildren() + 1
         f.Parent = parent
         
         AddCorner(f)
@@ -694,6 +709,7 @@ function Library:CreateWindow(title)
             lbl.Font = Enum.Font.Gotham
             lbl.TextSize = 14
             lbl.TextXAlignment = Enum.TextXAlignment.Left
+            lbl.ZIndex = f.ZIndex + 1
             lbl.Parent = f
         end
         
@@ -941,7 +957,8 @@ function Library:CreateWindow(title)
         
         local renderConn = RunService.RenderStepped:Connect(function()
             if dragging then
-                local pos = math.clamp((Mouse.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+                local width = math.max(bg.AbsoluteSize.X, 1)
+            local pos = math.clamp((Mouse.X - bg.AbsolutePosition.X) / width, 0, 1)
                 updateValue(min + (max - min) * pos)
             end
         end)
@@ -964,6 +981,7 @@ function Library:CreateWindow(title)
         btn.TextColor3 = Theme.Text
         btn.Font = Enum.Font.Gotham
         btn.TextSize = 12
+        btn.ZIndex = 5
         btn.Parent = f
         
         AddCorner(btn)
@@ -978,6 +996,7 @@ function Library:CreateWindow(title)
         list.ScrollBarThickness = 2
         list.BorderSizePixel = 0
         list.Parent = f
+        list.ZIndex = 20
         
         AddCorner(list)
         AddStroke(list)
@@ -1012,7 +1031,11 @@ function Library:CreateWindow(title)
             end)
         end
         
-        list.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 4)
+        local function UpdateDropdownCanvas()
+            list.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 4)
+        end
+        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateDropdownCanvas)
+        task.defer(UpdateDropdownCanvas)
 
         btn.MouseButton1Click:Connect(function()
             list.Visible = not list.Visible
@@ -1035,7 +1058,7 @@ function Library:CreateWindow(title)
         btn.Size = UDim2.new(0.42, -8, 0, 22)
         btn.Position = UDim2.new(0.58, 0, 0.5, -11)
         btn.BackgroundColor3 = Theme.MainBg
-        btn.Text = default and tostring(default) or "None"
+        btn.Text = (typeof(default) == "EnumItem" and default.Name) or (default and tostring(default)) or "None"
         btn.TextColor3 = Theme.Text
         btn.Font = Enum.Font.Gotham
         btn.TextSize = 12
