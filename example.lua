@@ -5,7 +5,7 @@
 ]]
 
 -- Твоя ссылка на raw-файл с GitHub
-local LibraryURL = "https://raw.githubusercontent.com/WareSploit/DeepSeek-V4.1-Flash-Library/main/Main.lua"
+local LibraryURL = "https://raw.githubusercontent.com/WareSploit/DeepSeek-V4.1-Flash-Library/main/main.lua"
 
 -- Загружаем библиотеку
 local success, Library = pcall(function()
