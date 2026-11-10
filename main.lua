@@ -697,24 +697,47 @@ local function BuildWindow(self, cfg)
             end
         end)
 
-        local page = New("ScrollingFrame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 2, ScrollBarImageColor3 = Library.Theme.Accent, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, Visible = false, Parent = pageHolder }, { Corner(4) })
+        local page = New("ScrollingFrame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 2, ScrollBarImageColor3 = Library.Theme.Accent, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.XY, ScrollingDirection = Enum.ScrollingDirection.XY, Visible = false, Parent = pageHolder }, { Corner(4) })
         Tab.Page = page
         table.insert(Library.ThemeListeners, function(t) page.ScrollBarImageColor3 = t.Accent end)
 
-        local subBar = New("Frame", { Size = UDim2.new(1, 0, 0, 26), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.5, Visible = false, Position = UDim2.fromOffset(0, 0), Parent = page }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2) })
+        local subBar = New("Frame", { Size = UDim2.new(1, 0, 0, 26), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.5, Visible = false, Parent = page }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2) })
         New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), Parent = subBar })
         New("UIPadding", { PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4), Parent = subBar })
         table.insert(Library.ThemeListeners, function(t) subBar.BackgroundColor3 = t.Panel end)
 
-        local contentContainer = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Position = UDim2.fromOffset(0, subBar.Visible and 34 or 0), Parent = page })
-        local leftCol = New("Frame", { Size = UDim2.new(0.5, -4, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 0), Parent = contentContainer }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
-        local rightCol = New("Frame", { Size = UDim2.new(0.5, -4, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Position = UDim2.new(0.5, 4, 0, 0), Parent = contentContainer }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
+        local contentContainer = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.XY, BackgroundTransparency = 1, Position = UDim2.fromOffset(0, subBar.Visible and 34 or 0), Parent = page })
+        
+        local function initColumns()
+            if not Tab._columns then
+                Tab._columns = {}
+                for _, v in ipairs(contentContainer:GetChildren()) do
+                    if v:IsA("Frame") then v:Destroy() end
+                end
+                New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = contentContainer })
+            end
+        end
+
+        function Tab:AddColumn(width)
+            initColumns()
+            local colWidth = width or 205
+            local colFrame = New("Frame", { Size = UDim2.new(0, colWidth, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = #Tab._columns + 1, Parent = contentContainer }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
+            local Column = { Window = Window, Tab = Tab }
+            table.insert(Tab._columns, Column)
+            function Column:AddSection(title, icon)
+                return CreateSection(colFrame, title, icon, Window, #Tab.Sections + 1)
+            end
+            return Column
+        end
 
         function Tab:AddSubTab(name)
+            initColumns()
             if not Tab._subTabs then Tab._subTabs = {}; subBar.Visible = true; contentContainer.Position = UDim2.fromOffset(0, 34) end
             local SubTab = { Name = name, Sections = {}, Tab = Tab }
             local sbtn = New("TextButton", { Size = UDim2.new(0, 80, 1, 0), BackgroundColor3 = Library.Theme.Element, BackgroundTransparency = 1, Text = name, TextColor3 = Library.Theme.TextDim, TextSize = 12, LayoutOrder = #Tab._subTabs + 1, Parent = subBar }, { Corner(4) })
-            local content = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Visible = false, LayoutOrder = #Tab._subTabs + 1, Parent = contentContainer }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
+            local content = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.XY, BackgroundTransparency = 1, Visible = false, LayoutOrder = #Tab._subTabs + 1, Parent = contentContainer })
+            local subColContainer = New("Frame", { Size = UDim2.new(0, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.XY, BackgroundTransparency = 1, Parent = content }, { New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
+            
             SubTab.Content, SubTab.Button = content, sbtn
             function SubTab:Select()
                 for _, st in ipairs(Tab._subTabs) do
@@ -725,7 +748,22 @@ local function BuildWindow(self, cfg)
             sbtn.MouseButton1Click:Connect(function() SubTab:Select() end)
             table.insert(Tab._subTabs, SubTab)
             if #Tab._subTabs == 1 then SubTab:Select() end
-            function SubTab:AddSection(title, icon) return CreateSection(content, title, icon, Window, #SubTab.Sections + 1) end
+            
+            function SubTab:AddColumn(width)
+                if not SubTab._columns then SubTab._columns = {} end
+                local colWidth = width or 205
+                local colFrame = New("Frame", { Size = UDim2.new(0, colWidth, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = #SubTab._columns + 1, Parent = subColContainer }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
+                local Column = { Window = Window, Tab = SubTab }
+                table.insert(SubTab._columns, Column)
+                function Column:AddSection(title, icon)
+                    return CreateSection(colFrame, title, icon, Window, #SubTab.Sections + 1)
+                end
+                return Column
+            end
+            function SubTab:AddSection(title, icon)
+                if not SubTab._columns then SubTab:AddColumn() end
+                return SubTab._columns[1]:AddSection(title, icon)
+            end
             return SubTab
         end
 
@@ -746,9 +784,9 @@ local function BuildWindow(self, cfg)
         table.insert(Window.Tabs, Tab)
         if #Window.Tabs == 1 then Tab:Select() end
 
-        function Tab:AddSection(title, icon, side)
-            local col = (side == "Right") and rightCol or leftCol
-            return CreateSection(col, title, icon, Window, #Tab.Sections + 1)
+        function Tab:AddSection(title, icon)
+            if not Tab._columns then Tab:AddColumn() end
+            return Tab._columns[1]:AddSection(title, icon)
         end
         return Tab
     end
