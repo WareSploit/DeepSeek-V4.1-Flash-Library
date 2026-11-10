@@ -147,7 +147,7 @@ local function MakeDraggable(frame, handle)
     end)
 end
 
-function AddToggle(Section, nextRow, o)
+local function AddToggle(Section, nextRow, o)
     o = type(o) == "string" and { Name = o } or o
     local state = o.Default or false
     local row = nextRow(26)
@@ -205,7 +205,7 @@ function AddToggle(Section, nextRow, o)
     return obj
 end
 
-function AddSlider(Section, nextRow, o)
+local function AddSlider(Section, nextRow, o)
     local min, max = o.Min or 0, o.Max or 100
     local dec = o.Decimals or 0
     local suffix = o.Suffix or ""
@@ -261,7 +261,7 @@ function AddSlider(Section, nextRow, o)
     return obj
 end
 
-function AddDropdown(Section, nextRow, o)
+local function AddDropdown(Section, nextRow, o)
     local multi = o.Multi or false
     local items = o.Items or {}
     local selected
@@ -380,7 +380,7 @@ function AddDropdown(Section, nextRow, o)
     return obj
 end
 
-function AddButton(Section, nextRow, o)
+local function AddButton(Section, nextRow, o)
     o = type(o) == "string" and { Name = o } or o
     local row = nextRow(28)
     local b = New("TextButton", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Theme.Element,
@@ -394,7 +394,7 @@ function AddButton(Section, nextRow, o)
     return b
 end
 
-function AddTextBox(Section, nextRow, o)
+local function AddTextBox(Section, nextRow, o)
     local row = nextRow(24)
     Label({ Text = o.Name, Size = UDim2.new(1, -140, 1, 0), Parent = row })
     local frame = New("Frame", { Size = UDim2.fromOffset(130, 22), Position = UDim2.new(1, -130, 0.5, -11),
@@ -417,7 +417,7 @@ function AddTextBox(Section, nextRow, o)
     return obj
 end
 
-function AddKeybind(Section, nextRow, o)
+local function AddKeybind(Section, nextRow, o)
     local key = o.Default
     local mode = o.Mode or "Toggle"
     local state = false
@@ -471,7 +471,7 @@ function AddKeybind(Section, nextRow, o)
     return obj
 end
 
-function AddColorPicker(Section, nextRow, o)
+local function AddColorPicker(Section, nextRow, o)
     local h, s, v = (o.Default or Color3.new(1, 1, 1)):ToHSV()
     local alpha = o.Alpha or 1
     local row = nextRow(22)
@@ -778,26 +778,29 @@ local function BuildWindow(self, cfg)
 
         function Tab:AddSection(title, icon)
             local Section = { Name = title, Window = Window }
+            
             local holder = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundColor3 = Theme.Player, BackgroundTransparency = 0.4,
                 BorderSizePixel = 0, LayoutOrder = #Tab.Sections + 1, Parent = page,
-            }, { Corner(4), Stroke(Theme.Stroke, 0, 2), New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }) })
+            }, { Corner(4), Stroke(Theme.Stroke, 0, 2) })
             
+            New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, Parent = holder })
+            New("UIPadding", { PaddingBottom = UDim.new(0, 12), PaddingTop = UDim.new(0, 0), PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), Parent = holder })
+
             local header = New("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, LayoutOrder = 1, Parent = holder })
             if icon then
-                New("ImageLabel", { Size = UDim2.fromOffset(14, 14), Position = UDim2.fromOffset(12, 8),
+                New("ImageLabel", { Size = UDim2.fromOffset(14, 14), Position = UDim2.fromOffset(0, 8),
                     BackgroundTransparency = 1, Image = icon, ImageColor3 = Theme.Accent, Parent = header })
             end
             Label({ Text = title, Font = Enum.Font.GothamBold, TextSize = 13,
-                Position = UDim2.fromOffset(icon and 32 or 12, 0),
-                Size = UDim2.new(1, -50, 1, 0), Parent = header })
+                Position = UDim2.fromOffset(icon and 22 or 0, 0),
+                Size = UDim2.new(1, -30, 1, 0), Parent = header })
 
             local content = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundTransparency = 1, LayoutOrder = 2, Parent = holder,
-            }, { New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }),
-                New("UIPadding", { PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12) }) })
+            }, { New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }) })
             
             Section.Holder, Section.Content = holder, content
             local order = 0
