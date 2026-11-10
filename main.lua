@@ -659,8 +659,6 @@ local function BuildWindow(self, cfg)
 
     local avatar = New("ImageLabel", { Name = "PlayerIconAvatar", Image = "rbxasset://textures/ui/GuiImagePlaceholder.png", BackgroundColor3 = Library.Theme.Panel, Size = UDim2.fromOffset(39, 39), Position = UDim2.fromOffset(8, 9), BorderSizePixel = 0, Parent = playerInfo }, { Corner(20), Stroke(Library.Theme.Stroke, 0, 2) })
     pcall(function() avatar.Image = Players:GetUserThumbnailAsync(LP.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48) end)
-    
-    -- ИСПРАВЛЕНИЕ НИКА: LP.DisplayName (или LP.Name) вместо LP.UserId
     Label({ Name = "UiTitle", Text = "Welcome, " .. LP.DisplayName, TextSize = 13, Size = UDim2.fromOffset(64, 40), Position = UDim2.fromOffset(52, 9), TextWrapped = true, Parent = playerInfo })
 
     local pageFrame = New("Frame", { Name = "PageFrame", Size = UDim2.new(0, 429, 0, 307), Position = UDim2.new(0, 120, 0, 42), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.5, BorderSizePixel = 0, ClipsDescendants = true, Parent = mainFrame }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2) })
@@ -684,6 +682,67 @@ local function BuildWindow(self, cfg)
         miniBtn.Text = Window.Minimized and "+" or "-"
         Tween(mainFrame, 0.25, { Size = UDim2.fromOffset(550, Window.Minimized and 42 or 349) })
     end)
+
+    function Window:AddWatermark()
+        local wm = New("Frame", { Name = "Watermark", Size = UDim2.fromOffset(230, 26), Position = UDim2.fromOffset(14, 70), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.3, BorderSizePixel = 0, Parent = gui }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2), Gradient() })
+        New("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), Parent = wm })
+        local lbl = Label({ Size = UDim2.fromScale(1, 1), Text = "DeepSeek | Loading...", Font = Enum.Font.GothamBold, TextColor3 = Library.Theme.Text, TextScaled = true, Parent = wm })
+        New("UITextSizeConstraint", { MaxTextSize = 14, MinTextSize = 10, Parent = lbl })
+        local frames = 0
+        Connect(RunService.RenderStepped, function() frames += 1 end)
+        task.spawn(function()
+            while task.wait(1) do
+                local ping = 0
+                pcall(function() ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) end)
+                lbl.Text = string.format("DeepSeek | FPS: %d | Ping: %dms | %s", frames, ping, os.date("%H:%M:%S"))
+                frames = 0
+            end
+        end)
+        return wm
+    end
+
+    function Window:AddKeybindList()
+        local kl = New("Frame", { Name = "KeyList", Size = UDim2.fromOffset(170, 50), Position = UDim2.fromOffset(14, 104), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.3, BorderSizePixel = 0, Parent = gui }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2), Gradient() })
+        New("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, Parent = kl })
+        New("UIPadding", { PaddingTop = UDim.new(0, 8), PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8), Parent = kl })
+        task.spawn(function()
+            while task.wait(0.5) do
+                local count = 0
+                local activeFlags = {}
+                for flag, val in pairs(Library.Flags) do
+                    if typeof(val) == "EnumItem" and val.EnumType == Enum.KeyCode then
+                        activeFlags[flag] = val.Name
+                        count += 1
+                    end
+                end
+                local currentLabels = {}
+                for _, child in ipairs(kl:GetChildren()) do
+                    if child:IsA("TextLabel") then currentLabels[child.Name] = child end
+                end
+                local needsRebuild = (#kl:GetChildren() - 1 ~= count)
+                if not needsRebuild then
+                    for flag, keyName in pairs(activeFlags) do
+                        if not currentLabels[flag] or currentLabels[flag].Text ~= string.format("[%s] %s", keyName, flag) then
+                            needsRebuild = true
+                            break
+                        end
+                    end
+                end
+                if needsRebuild then
+                    for _, child in ipairs(kl:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
+                    local idx = 0
+                    for flag, keyName in pairs(activeFlags) do
+                        idx += 1
+                        local lbl = Label({ Name = flag, Size = UDim2.new(1, 0, 0, 16), Text = string.format("[%s] %s", keyName, flag), Font = Enum.Font.GothamBold, TextColor3 = Library.Theme.Accent, TextScaled = true, LayoutOrder = idx, Parent = kl })
+                        New("UITextSizeConstraint", { MaxTextSize = 13, MinTextSize = 9, Parent = lbl })
+                        table.insert(Library.ThemeListeners, function(t) lbl.TextColor3 = t.Accent end)
+                    end
+                    kl.Size = UDim2.fromOffset(170, math.max(34, count * 20 + 16))
+                end
+            end
+        end)
+        return kl
+    end
 
     function Window:AddTab(name, icon)
         local Tab = { Name = name, Sections = {}, Window = Window }
