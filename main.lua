@@ -53,7 +53,11 @@ Library.Themes = {
     }
 }
 
-Library.Theme = Library.Themes.Blue
+-- ФИКС БАГА: Теперь Library.Theme - это независимая таблица, а не ссылка на Themes.Blue
+Library.Theme = {}
+for k, v in pairs(Library.Themes.Blue) do
+    Library.Theme[k] = v
+end
 
 function Library:SetTheme(themeName)
     if not self.Themes[themeName] then return end
@@ -701,12 +705,7 @@ local function BuildWindow(self, cfg)
         Tab.Page = page
         table.insert(Library.ThemeListeners, function(t) page.ScrollBarImageColor3 = t.Accent end)
 
-        local subBar = New("Frame", { Size = UDim2.new(1, 0, 0, 26), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.5, Visible = false, Parent = page }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2) })
-        New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), Parent = subBar })
-        New("UIPadding", { PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4), Parent = subBar })
-        table.insert(Library.ThemeListeners, function(t) subBar.BackgroundColor3 = t.Panel end)
-
-        local contentContainer = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.XY, BackgroundTransparency = 1, Position = UDim2.fromOffset(0, subBar.Visible and 34 or 0), Parent = page })
+        local contentContainer = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.XY, BackgroundTransparency = 1, Parent = page })
         
         local function initColumns()
             if not Tab._columns then
@@ -728,43 +727,6 @@ local function BuildWindow(self, cfg)
                 return CreateSection(colFrame, title, icon, Window, #Tab.Sections + 1)
             end
             return Column
-        end
-
-        function Tab:AddSubTab(name)
-            initColumns()
-            if not Tab._subTabs then Tab._subTabs = {}; subBar.Visible = true; contentContainer.Position = UDim2.fromOffset(0, 34) end
-            local SubTab = { Name = name, Sections = {}, Tab = Tab }
-            local sbtn = New("TextButton", { Size = UDim2.new(0, 80, 1, 0), BackgroundColor3 = Library.Theme.Element, BackgroundTransparency = 1, Text = name, TextColor3 = Library.Theme.TextDim, TextSize = 12, LayoutOrder = #Tab._subTabs + 1, Parent = subBar }, { Corner(4) })
-            local content = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.XY, BackgroundTransparency = 1, Visible = false, LayoutOrder = #Tab._subTabs + 1, Parent = contentContainer })
-            local subColContainer = New("Frame", { Size = UDim2.new(0, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.XY, BackgroundTransparency = 1, Parent = content }, { New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
-            
-            SubTab.Content, SubTab.Button = content, sbtn
-            function SubTab:Select()
-                for _, st in ipairs(Tab._subTabs) do
-                    st.Content.Visible = false; st.Button.TextColor3 = Library.Theme.TextDim; Tween(st.Button, 0.2, { BackgroundTransparency = 1 })
-                end
-                content.Visible = true; sbtn.TextColor3 = Library.Theme.Text; Tween(sbtn, 0.2, { BackgroundTransparency = 0.5 })
-            end
-            sbtn.MouseButton1Click:Connect(function() SubTab:Select() end)
-            table.insert(Tab._subTabs, SubTab)
-            if #Tab._subTabs == 1 then SubTab:Select() end
-            
-            function SubTab:AddColumn(width)
-                if not SubTab._columns then SubTab._columns = {} end
-                local colWidth = width or 205
-                local colFrame = New("Frame", { Size = UDim2.new(0, colWidth, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = #SubTab._columns + 1, Parent = subColContainer }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
-                local Column = { Window = Window, Tab = SubTab }
-                table.insert(SubTab._columns, Column)
-                function Column:AddSection(title, icon)
-                    return CreateSection(colFrame, title, icon, Window, #SubTab.Sections + 1)
-                end
-                return Column
-            end
-            function SubTab:AddSection(title, icon)
-                if not SubTab._columns then SubTab:AddColumn() end
-                return SubTab._columns[1]:AddSection(title, icon)
-            end
-            return SubTab
         end
 
         function Tab:Select()
