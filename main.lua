@@ -47,8 +47,25 @@ Library.__index = Library
 Library.Flags = {}
 Library.Registry = {}
 Library.Connections = {}
+Library.Accents = {}
 Library.Icons = Icons
 Library.Theme = Theme
+
+Library.Palettes = {
+    Blue = Color3.fromRGB(120, 195, 255),
+    Red = Color3.fromRGB(255, 100, 100),
+    Green = Color3.fromRGB(100, 255, 150),
+    Purple = Color3.fromRGB(200, 120, 255),
+    White = Color3.fromRGB(255, 255, 255),
+    Orange = Color3.fromRGB(255, 160, 80),
+}
+
+function Library:SetAccentColor(color)
+    Theme.Accent = color
+    for _, fn in pairs(self.Accents) do
+        pcall(fn, color)
+    end
+end
 
 local function New(class, props, children)
     local o = Instance.new(class)
@@ -159,6 +176,11 @@ local function AddToggle(Section, nextRow, o)
     local switch = New("TextButton", { Size = UDim2.fromOffset(34, 18), Position = UDim2.new(1, -34, 0.5, -9), BackgroundColor3 = state and Theme.Accent or Theme.Element, AutoButtonColor = false, Text = "", Parent = row }, { Corner(9), Stroke(Theme.Stroke, 0.3, 1) })
     local knob = New("Frame", { Size = UDim2.fromOffset(14, 14), AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, state and 18 or 2, 0.5, 0), BackgroundColor3 = Color3.new(1, 1, 1), Parent = switch }, { Corner(7) })
     local subRows, obj = {}, {}
+    
+    table.insert(Library.Accents, function(c)
+        if state then Tween(switch, 0.2, { BackgroundColor3 = c }) end
+    end)
+
     local function apply(v)
         state = v
         Tween(switch, 0.2, { BackgroundColor3 = v and Theme.Accent or Theme.Element })
@@ -173,6 +195,7 @@ local function AddToggle(Section, nextRow, o)
     switch.MouseButton1Click:Connect(function() apply(not state) end)
     if o.Flag then Library.Flags[o.Flag] = state end
     RegisterFlag(o.Flag, function(v) obj:Set(v) end)
+    
     function obj:AddSubToggle(so)
         local sr = nextRow(22)
         sr.Visible = state; sr.Size = UDim2.new(1, -16, 0, 22); sr.Position = UDim2.fromOffset(16, 0)
@@ -181,6 +204,11 @@ local function AddToggle(Section, nextRow, o)
         local ss = so.Default or false
         local ssw = New("TextButton", { Size = UDim2.fromOffset(28, 14), Position = UDim2.new(1, -28, 0.5, -7), BackgroundColor3 = ss and Theme.Accent or Theme.Element, AutoButtonColor = false, Text = "", Parent = sr }, { Corner(7) })
         local sknob = New("Frame", { Size = UDim2.fromOffset(10, 10), AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, ss and 16 or 2, 0.5, 0), BackgroundColor3 = Color3.new(1, 1, 1), Parent = ssw }, { Corner(5) })
+        
+        table.insert(Library.Accents, function(c)
+            if ss then Tween(ssw, 0.2, { BackgroundColor3 = c }) end
+        end)
+
         local function applySub(v)
             ss = v
             Tween(ssw, 0.2, { BackgroundColor3 = v and Theme.Accent or Theme.Element })
@@ -206,6 +234,14 @@ local function AddSlider(Section, nextRow, o)
     local track = New("TextButton", { Size = UDim2.new(1, 0, 0, 6), Position = UDim2.new(0, 0, 0, 24), BackgroundColor3 = Theme.Element, AutoButtonColor = false, Text = "", Parent = row }, { Corner(3), Stroke(Theme.Stroke, 0.4, 1) })
     local fill = New("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = Theme.Accent, BorderSizePixel = 0, Parent = track }, { Corner(3) })
     local grab = New("Frame", { Size = UDim2.fromOffset(12, 12), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 0, 0.5, 0), BackgroundColor3 = Color3.new(1, 1, 1), Parent = track }, { Corner(6), Stroke(Theme.Accent, 0, 2) })
+
+    table.insert(Library.Accents, function(c)
+        fill.BackgroundColor3 = c
+        vLabel.TextColor3 = c
+        local s = grab:FindFirstChildOfClass("UIStroke")
+        if s then s.Color = c end
+    end)
+
     local function format(v)
         if dec == 0 then return tostring(math.floor(v)) end
         return string.format("%." .. dec .. "f", v)
@@ -266,6 +302,11 @@ local function AddDropdown(Section, nextRow, o)
     Label({ Text = "v", TextSize = 10, TextColor3 = Theme.TextDim, TextXAlignment = Enum.TextXAlignment.Center, Size = UDim2.fromOffset(16, 22), Position = UDim2.new(1, -18, 0, 0), Parent = box })
     local gui = Section.Window and Section.Window.Gui
     local popup = New("ScrollingFrame", { Visible = false, ZIndex = 100, Size = UDim2.fromOffset(130, 0), BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.15, BorderSizePixel = 0, ScrollBarThickness = 2, ScrollBarImageColor3 = Theme.Accent, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = gui }, { Corner(4), Stroke(Theme.Stroke, 0, 2), New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }) })
+    
+    table.insert(Library.Accents, function(c)
+        popup.ScrollBarImageColor3 = c
+    end)
+
     local searchBox
     if o.Search then
         local sh = New("Frame", { Size = UDim2.new(1, 0, 0, 26), BackgroundTransparency = 1, LayoutOrder = 0, Parent = popup })
@@ -391,6 +432,11 @@ local function AddKeybind(Section, nextRow, o)
     Label({ Text = o.Name, Size = UDim2.new(1, -100, 1, 0), Parent = row })
     local b = New("TextButton", { Size = UDim2.fromOffset(60, 22), Position = UDim2.new(1, -94, 0.5, -11), BackgroundColor3 = Theme.Element, AutoButtonColor = false, Text = key and key.Name or "None", TextSize = 12, TextColor3 = Theme.Text, Parent = row }, { Corner(4), Stroke(Theme.Stroke, 0.4, 1) })
     local modeBtn = New("TextButton", { Size = UDim2.fromOffset(28, 22), Position = UDim2.new(1, -28, 0.5, -11), BackgroundColor3 = Theme.Element, AutoButtonColor = false, Text = mode:sub(1, 1), Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Theme.Accent, Parent = row }, { Corner(4), Stroke(Theme.Stroke, 0.4, 1) })
+    
+    table.insert(Library.Accents, function(c)
+        modeBtn.TextColor3 = c
+    end)
+
     local listening = false
     b.MouseButton1Click:Connect(function() listening = true; b.Text = "..."; b.TextColor3 = Theme.Accent end)
     modeBtn.MouseButton1Click:Connect(function()
@@ -520,7 +566,8 @@ local function CreateSection(parentContent, title, icon, Window, order)
     
     local header = New("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, LayoutOrder = 1, Parent = holder })
     if icon then
-        New("ImageLabel", { Size = UDim2.fromOffset(14, 14), Position = UDim2.fromOffset(0, 8), BackgroundTransparency = 1, Image = icon, ImageColor3 = Theme.Accent, Parent = header })
+        local hIcon = New("ImageLabel", { Size = UDim2.fromOffset(14, 14), Position = UDim2.fromOffset(0, 8), BackgroundTransparency = 1, Image = icon, ImageColor3 = Theme.Accent, Parent = header })
+        table.insert(Library.Accents, function(c) hIcon.ImageColor3 = c end)
     end
     Label({ Text = title, Font = Enum.Font.GothamBold, TextSize = 13, Position = UDim2.fromOffset(icon and 22 or 0, 0), Size = UDim2.new(1, -30, 1, 0), Parent = header })
     
@@ -697,6 +744,7 @@ local function BuildWindow(self, cfg)
                         idx += 1
                         local lbl = Label({ Name = flag, Size = UDim2.new(1, 0, 0, 16), Text = string.format("[%s] %s", keyName, flag), Font = Enum.Font.GothamBold, TextColor3 = Theme.Accent, TextScaled = true, LayoutOrder = idx, Parent = kl })
                         New("UITextSizeConstraint", { MaxTextSize = 13, MinTextSize = 9, Parent = lbl })
+                        table.insert(Library.Accents, function(c) lbl.TextColor3 = c end)
                     end
                     kl.Size = UDim2.fromOffset(170, math.max(34, count * 20 + 16))
                 end
@@ -713,8 +761,15 @@ local function BuildWindow(self, cfg)
         local lbl = Label({ Text = name, TextSize = 12, TextColor3 = Theme.TextDim, Position = UDim2.fromOffset(32, 0), Size = UDim2.new(1, -38, 1, 0), Parent = btn })
         Tab.Button, Tab.Indicator, Tab.TabIcon, Tab.TabLabel = btn, indicator, ico, lbl
 
+        table.insert(Library.Accents, function(c)
+            indicator.BackgroundColor3 = c
+            if Window.CurrentTab == Tab then ico.ImageColor3 = c end
+        end)
+
         local page = New("ScrollingFrame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 2, ScrollBarImageColor3 = Theme.Accent, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, Visible = false, Parent = pageHolder }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
         Tab.Page = page
+
+        table.insert(Library.Accents, function(c) page.ScrollBarImageColor3 = c end)
 
         local subBar = New("Frame", { Size = UDim2.new(1, 0, 0, 26), BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.5, Visible = false, LayoutOrder = 1, Parent = page }, { Corner(4), Stroke(Theme.Stroke, 0, 2) })
         New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), Parent = subBar })
@@ -783,7 +838,12 @@ function Library:Notify(o)
     elseif ntype == "Error" then color = Theme.Error end
     local wrapper = New("Frame", { Size = UDim2.fromOffset(280, 60), BackgroundTransparency = 1, Parent = Library.NotifyHolder })
     local frame = New("Frame", { Size = UDim2.fromScale(1, 1), Position = UDim2.new(0, 300, 0, 0), BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.1, Parent = wrapper }, { Corner(4), Stroke(Theme.Stroke, 0, 2), Gradient() })
-    New("Frame", { Size = UDim2.new(0, 3, 1, -8), Position = UDim2.fromOffset(0, 4), BackgroundColor3 = color, BorderSizePixel = 0, Parent = frame }, { Corner(2) })
+    local line = New("Frame", { Size = UDim2.new(0, 3, 1, -8), Position = UDim2.fromOffset(0, 4), BackgroundColor3 = color, BorderSizePixel = 0, Parent = frame }, { Corner(2) })
+    
+    if ntype == "Info" then
+        table.insert(Library.Accents, function(c) line.BackgroundColor3 = c end)
+    end
+
     Label({ Text = title, Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = Theme.Text, Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -20, 0, 16), Parent = frame })
     Label({ Text = text, TextSize = 12, TextColor3 = Theme.TextDim, Position = UDim2.fromOffset(14, 26), Size = UDim2.new(1, -20, 0, 28), TextWrapped = true, Parent = frame })
     Tween(frame, 0.3, { Position = UDim2.new(0, 0, 0, 0) })
