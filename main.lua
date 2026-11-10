@@ -53,7 +53,6 @@ Library.Themes = {
     }
 }
 
--- ФИКС БАГА: Теперь Library.Theme - это независимая таблица, а не ссылка на Themes.Blue
 Library.Theme = {}
 for k, v in pairs(Library.Themes.Blue) do
     Library.Theme[k] = v
@@ -660,7 +659,9 @@ local function BuildWindow(self, cfg)
 
     local avatar = New("ImageLabel", { Name = "PlayerIconAvatar", Image = "rbxasset://textures/ui/GuiImagePlaceholder.png", BackgroundColor3 = Library.Theme.Panel, Size = UDim2.fromOffset(39, 39), Position = UDim2.fromOffset(8, 9), BorderSizePixel = 0, Parent = playerInfo }, { Corner(20), Stroke(Library.Theme.Stroke, 0, 2) })
     pcall(function() avatar.Image = Players:GetUserThumbnailAsync(LP.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48) end)
-    Label({ Name = "UiTitle", Text = "Welcome, " .. LP.UserId, TextSize = 13, Size = UDim2.fromOffset(64, 40), Position = UDim2.fromOffset(52, 9), TextWrapped = true, Parent = playerInfo })
+    
+    -- ИСПРАВЛЕНИЕ НИКА: LP.DisplayName (или LP.Name) вместо LP.UserId
+    Label({ Name = "UiTitle", Text = "Welcome, " .. LP.DisplayName, TextSize = 13, Size = UDim2.fromOffset(64, 40), Position = UDim2.fromOffset(52, 9), TextWrapped = true, Parent = playerInfo })
 
     local pageFrame = New("Frame", { Name = "PageFrame", Size = UDim2.new(0, 429, 0, 307), Position = UDim2.new(0, 120, 0, 42), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.5, BorderSizePixel = 0, ClipsDescendants = true, Parent = mainFrame }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2) })
     Window.PageFrame = pageFrame
