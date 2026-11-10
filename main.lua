@@ -360,8 +360,9 @@ local function BuildWindow(self, cfg)
                 Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundColor3 = Theme.Player, BackgroundTransparency = 0.4,
                 BorderSizePixel = 0, LayoutOrder = #Tab.Sections + 1, Parent = page,
-            }, { Corner(4), Stroke(Theme.Stroke, 0, 2) })
-            local header = New("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, Parent = holder })
+            }, { Corner(4), Stroke(Theme.Stroke, 0, 2), New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }) })
+
+            local header = New("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, LayoutOrder = 1, Parent = holder })
             if icon then
                 New("ImageLabel", { Size = UDim2.fromOffset(14, 14), Position = UDim2.fromOffset(12, 8),
                     BackgroundTransparency = 1, Image = icon, ImageColor3 = Theme.Accent, Parent = header })
@@ -369,11 +370,13 @@ local function BuildWindow(self, cfg)
             Label({ Text = title, Font = Enum.Font.GothamBold, TextSize = 13,
                 Position = UDim2.fromOffset(icon and 32 or 12, 0),
                 Size = UDim2.new(1, -50, 1, 0), Parent = header })
+
             local content = New("Frame", {
-                Size = UDim2.new(1, -24, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
-                Position = UDim2.fromOffset(12, 30), BackgroundTransparency = 1, Parent = holder,
+                Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1, LayoutOrder = 2, Parent = holder,
             }, { New("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }),
-                New("UIPadding", { PaddingBottom = UDim.new(0, 12) }) })
+                New("UIPadding", { PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12) }) })
+            
             Section.Holder, Section.Content = holder, content
             local order = 0
             local function nextRow(h)
