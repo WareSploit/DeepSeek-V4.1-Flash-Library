@@ -1,18 +1,9 @@
 local Icons = {
-    crosshairs = "rbxassetid://96677288280405",
-    ghost      = "rbxassetid://95400397758754",
-    mouse      = "rbxassetid://74350468513068",
-    user       = "rbxassetid://97066657594742",
-    pallet     = "rbxassetid://83365140694071",
-    hammer     = "rbxassetid://118512898552101",
-    code       = "rbxassetid://100793810819046",
-    save       = "rbxassetid://136566823798983",
-    feather    = "rbxassetid://130188814728078",
-    crown      = "rbxassetid://73317911385704",
-    dagger     = "rbxassetid://133081986539088",
-    baby       = "rbxassetid://127135446273067",
-    ad         = "rbxassetid://134916447199398",
-    axe_battle = "rbxassetid://91285868461583",
+    crosshairs = "rbxassetid://96677288280405", ghost = "rbxassetid://95400397758754", mouse = "rbxassetid://74350468513068",
+    user = "rbxassetid://97066657594742", pallet = "rbxassetid://83365140694071", hammer = "rbxassetid://118512898552101",
+    code = "rbxassetid://100793810819046", save = "rbxassetid://136566823798983", feather = "rbxassetid://130188814728078",
+    crown = "rbxassetid://73317911385704", dagger = "rbxassetid://133081986539088", baby = "rbxassetid://127135446273067",
+    ad = "rbxassetid://134916447199398", axe_battle = "rbxassetid://91285868461583",
 }
 
 local HttpService      = game:GetService("HttpService")
@@ -208,9 +199,7 @@ local function AddToggle(Section, nextRow, o)
         local ssw = New("TextButton", { Size = UDim2.fromOffset(28, 14), Position = UDim2.new(1, -28, 0.5, -7), BackgroundColor3 = ss and Library.Theme.Accent or Library.Theme.Element, AutoButtonColor = false, Text = "", Parent = sr }, { Corner(7) })
         local sknob = New("Frame", { Size = UDim2.fromOffset(10, 10), AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, ss and 16 or 2, 0.5, 0), BackgroundColor3 = Color3.new(1, 1, 1), Parent = ssw }, { Corner(5) })
         
-        table.insert(Library.ThemeListeners, function(t)
-            ssw.BackgroundColor3 = ss and t.Accent or t.Element
-        end)
+        table.insert(Library.ThemeListeners, function(t) ssw.BackgroundColor3 = ss and t.Accent or t.Element end)
 
         local function applySub(v)
             ss = v
@@ -409,11 +398,7 @@ local function AddButton(Section, nextRow, o)
     b.MouseButton1Down:Connect(function() Tween(b, 0.1, { BackgroundColor3 = Library.Theme.ElementActive }) end)
     b.MouseButton1Up:Connect(function() Tween(b, 0.1, { BackgroundColor3 = Library.Theme.ElementHover }) end)
     b.MouseButton1Click:Connect(function() if o.Callback then task.spawn(o.Callback) end end)
-    
-    table.insert(Library.ThemeListeners, function(t)
-        b.BackgroundColor3 = t.Element
-        b.TextColor3 = t.Text
-    end)
+    table.insert(Library.ThemeListeners, function(t) b.BackgroundColor3 = t.Element; b.TextColor3 = t.Text end)
     return b
 end
 
@@ -433,11 +418,7 @@ local function AddTextBox(Section, nextRow, o)
     function obj:Set(v) tb.Text = v; if o.Flag then Library.Flags[o.Flag] = v end end
     function obj:Get() return tb.Text end
     RegisterFlag(o.Flag, function(v) obj:Set(v) end)
-    
-    table.insert(Library.ThemeListeners, function(t)
-        frame.BackgroundColor3 = t.Element
-        tb.TextColor3 = t.Text
-    end)
+    table.insert(Library.ThemeListeners, function(t) frame.BackgroundColor3 = t.Element; tb.TextColor3 = t.Text end)
     return obj
 end
 
@@ -449,13 +430,7 @@ local function AddKeybind(Section, nextRow, o)
     Label({ Text = o.Name, Size = UDim2.new(1, -100, 1, 0), Parent = row })
     local b = New("TextButton", { Size = UDim2.fromOffset(60, 22), Position = UDim2.new(1, -94, 0.5, -11), BackgroundColor3 = Library.Theme.Element, AutoButtonColor = false, Text = key and key.Name or "None", TextSize = 12, TextColor3 = Library.Theme.Text, Parent = row }, { Corner(4), Stroke(Library.Theme.Stroke, 0.4, 1) })
     local modeBtn = New("TextButton", { Size = UDim2.fromOffset(28, 22), Position = UDim2.new(1, -28, 0.5, -11), BackgroundColor3 = Library.Theme.Element, AutoButtonColor = false, Text = mode:sub(1, 1), Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Library.Theme.Accent, Parent = row }, { Corner(4), Stroke(Library.Theme.Stroke, 0.4, 1) })
-    
-    table.insert(Library.ThemeListeners, function(t)
-        b.BackgroundColor3 = t.Element
-        modeBtn.BackgroundColor3 = t.Element
-        modeBtn.TextColor3 = t.Accent
-        b.TextColor3 = t.Text
-    end)
+    table.insert(Library.ThemeListeners, function(t) b.BackgroundColor3 = t.Element; modeBtn.BackgroundColor3 = t.Element; modeBtn.TextColor3 = t.Accent; b.TextColor3 = t.Text end)
 
     local listening = false
     b.MouseButton1Click:Connect(function() listening = true; b.Text = "..."; b.TextColor3 = Library.Theme.Accent end)
@@ -514,7 +489,6 @@ local function AddColorPicker(Section, nextRow, o)
     local hueKnob = New("Frame", { ZIndex = 102, Size = UDim2.fromOffset(10, 10), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(h, 0, 0.5, 0), BackgroundColor3 = Color3.fromHSV(h, 1, 1), Parent = hue }, { Corner(5), Stroke(Color3.new(1, 1, 1), 0, 2) })
     local abar = New("ImageButton", { ZIndex = 101, Size = UDim2.fromOffset(164, 10), Position = UDim2.fromOffset(8, 166), BackgroundColor3 = Color3.fromHSV(h, s, v), AutoButtonColor = false, Image = "", Parent = popup }, { Corner(3), New("UIGradient", { Transparency = NumberSequence.new(1, 0) }) })
     local aKnob = New("Frame", { ZIndex = 102, Size = UDim2.fromOffset(10, 10), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(alpha, 0, 0.5, 0), BackgroundColor3 = Color3.fromHSV(h, s, v), Parent = abar }, { Corner(5), Stroke(Color3.new(1, 1, 1), 0, 2) })
-    
     table.insert(Library.ThemeListeners, function(t) popup.BackgroundColor3 = t.Panel end)
 
     local obj = {}
@@ -682,7 +656,7 @@ local function BuildWindow(self, cfg)
 
     local avatar = New("ImageLabel", { Name = "PlayerIconAvatar", Image = "rbxasset://textures/ui/GuiImagePlaceholder.png", BackgroundColor3 = Library.Theme.Panel, Size = UDim2.fromOffset(39, 39), Position = UDim2.fromOffset(8, 9), BorderSizePixel = 0, Parent = playerInfo }, { Corner(20), Stroke(Library.Theme.Stroke, 0, 2) })
     pcall(function() avatar.Image = Players:GetUserThumbnailAsync(LP.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48) end)
-    Label({ Name = "UiTitle", Text = "Welcome, " .. LP.Name, TextSize = 13, Size = UDim2.fromOffset(64, 40), Position = UDim2.fromOffset(52, 9), TextWrapped = true, Parent = playerInfo })
+    Label({ Name = "UiTitle", Text = "Welcome, " .. LP.UserId, TextSize = 13, Size = UDim2.fromOffset(64, 40), Position = UDim2.fromOffset(52, 9), TextWrapped = true, Parent = playerInfo })
 
     local pageFrame = New("Frame", { Name = "PageFrame", Size = UDim2.new(0, 429, 0, 307), Position = UDim2.new(0, 120, 0, 42), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.5, BorderSizePixel = 0, ClipsDescendants = true, Parent = mainFrame }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2) })
     Window.PageFrame = pageFrame
@@ -723,19 +697,21 @@ local function BuildWindow(self, cfg)
             end
         end)
 
-        local page = New("ScrollingFrame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 2, ScrollBarImageColor3 = Library.Theme.Accent, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, Visible = false, Parent = pageHolder }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
+        local page = New("ScrollingFrame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 2, ScrollBarImageColor3 = Library.Theme.Accent, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, Visible = false, Parent = pageHolder }, { Corner(4) })
         Tab.Page = page
         table.insert(Library.ThemeListeners, function(t) page.ScrollBarImageColor3 = t.Accent end)
 
-        local subBar = New("Frame", { Size = UDim2.new(1, 0, 0, 26), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.5, Visible = false, LayoutOrder = 1, Parent = page }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2) })
+        local subBar = New("Frame", { Size = UDim2.new(1, 0, 0, 26), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.5, Visible = false, Position = UDim2.fromOffset(0, 0), Parent = page }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2) })
         New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), Parent = subBar })
         New("UIPadding", { PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4), Parent = subBar })
         table.insert(Library.ThemeListeners, function(t) subBar.BackgroundColor3 = t.Panel end)
-        
-        local contentContainer = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = 2, Parent = page }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
+
+        local contentContainer = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Position = UDim2.fromOffset(0, subBar.Visible and 34 or 0), Parent = page })
+        local leftCol = New("Frame", { Size = UDim2.new(0.5, -4, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 0), Parent = contentContainer }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
+        local rightCol = New("Frame", { Size = UDim2.new(0.5, -4, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Position = UDim2.new(0.5, 4, 0, 0), Parent = contentContainer }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
 
         function Tab:AddSubTab(name)
-            if not Tab._subTabs then Tab._subTabs = {}; subBar.Visible = true end
+            if not Tab._subTabs then Tab._subTabs = {}; subBar.Visible = true; contentContainer.Position = UDim2.fromOffset(0, 34) end
             local SubTab = { Name = name, Sections = {}, Tab = Tab }
             local sbtn = New("TextButton", { Size = UDim2.new(0, 80, 1, 0), BackgroundColor3 = Library.Theme.Element, BackgroundTransparency = 1, Text = name, TextColor3 = Library.Theme.TextDim, TextSize = 12, LayoutOrder = #Tab._subTabs + 1, Parent = subBar }, { Corner(4) })
             local content = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Visible = false, LayoutOrder = #Tab._subTabs + 1, Parent = contentContainer }, { New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
@@ -769,7 +745,11 @@ local function BuildWindow(self, cfg)
         
         table.insert(Window.Tabs, Tab)
         if #Window.Tabs == 1 then Tab:Select() end
-        function Tab:AddSection(title, icon) return CreateSection(contentContainer, title, icon, Window, #Tab.Sections + 1) end
+
+        function Tab:AddSection(title, icon, side)
+            local col = (side == "Right") and rightCol or leftCol
+            return CreateSection(col, title, icon, Window, #Tab.Sections + 1)
+        end
         return Tab
     end
 
@@ -795,9 +775,7 @@ function Library:Notify(o)
     local wrapper = New("Frame", { Size = UDim2.fromOffset(280, 60), BackgroundTransparency = 1, Parent = Library.NotifyHolder })
     local frame = New("Frame", { Size = UDim2.fromScale(1, 1), Position = UDim2.new(0, 300, 0, 0), BackgroundColor3 = Library.Theme.Panel, BackgroundTransparency = 0.1, Parent = wrapper }, { Corner(4), Stroke(Library.Theme.Stroke, 0, 2), Gradient() })
     local line = New("Frame", { Size = UDim2.new(0, 3, 1, -8), Position = UDim2.fromOffset(0, 4), BackgroundColor3 = color, BorderSizePixel = 0, Parent = frame }, { Corner(2) })
-    
     table.insert(Library.ThemeListeners, function(t) frame.BackgroundColor3 = t.Panel; if ntype == "Info" then line.BackgroundColor3 = t.Accent end end)
-
     Label({ Text = title, Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = Library.Theme.Text, Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -20, 0, 16), Parent = frame })
     Label({ Text = text, TextSize = 12, TextColor3 = Library.Theme.TextDim, Position = UDim2.fromOffset(14, 26), Size = UDim2.new(1, -20, 0, 28), TextWrapped = true, Parent = frame })
     Tween(frame, 0.3, { Position = UDim2.new(0, 0, 0, 0) })
